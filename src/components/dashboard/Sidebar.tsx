@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, Smile, FileText, Settings, Info, User,
+  Minus, Smile, Settings, User,
 } from 'lucide-react';
 import { ElementType, ELEMENT_LABELS } from '@/types/board';
 
+// Sidebar items - File removed per user request
 const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string }[] = [
   { type: 'note', icon: StickyNote, color: 'text-amber-500' },
   { type: 'todo', icon: ListTodo, color: 'text-primary' },
@@ -13,7 +14,6 @@ const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string
   { type: 'checklist', icon: CheckSquare, color: 'text-emerald-500' },
   { type: 'divider', icon: Minus, color: 'text-muted-foreground' },
   { type: 'icon', icon: Smile, color: 'text-orange-500' },
-  { type: 'file', icon: FileText, color: 'text-muted-foreground' },
 ];
 
 const Sidebar = () => {
@@ -52,7 +52,7 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* Footer: user info + time */}
+      {/* Footer: user info + time + settings */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
@@ -68,12 +68,10 @@ const Sidebar = () => {
             {time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </div>
         </div>
+        {/* Settings button only - info removed */}
         <div className="flex items-center gap-2 mt-3">
           <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Settings">
             <Settings className="w-3.5 h-3.5 text-muted-foreground" />
-          </button>
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Info">
-            <Info className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>
       </div>

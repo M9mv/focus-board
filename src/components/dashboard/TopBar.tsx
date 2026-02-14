@@ -1,4 +1,4 @@
-import { Home, Calendar, Database, Plus, Lock, Unlock, LogOut, Timer, X } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -11,28 +11,28 @@ interface TopBarProps {
   zoom: number;
   onTogglePomodoro: () => void;
   showPomodoro: boolean;
+  onLogout: () => void;
+  onHome: () => void;
+  onCalendar: () => void;
 }
 
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
+  onLogout, onHome, onCalendar,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
-      {/* Left nav */}
+      {/* Left nav - Database removed, Home & Calendar active */}
       <div className="flex items-center gap-1 mr-4">
-        <button className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Home">
+        <button onClick={onHome} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Home">
           <Home className="w-4 h-4 text-muted-foreground" />
         </button>
-        <button className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Calendar">
+        <button onClick={onCalendar} className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Calendar">
           <Calendar className="w-4 h-4 text-muted-foreground" />
-        </button>
-        <button className="p-2 rounded-lg hover:bg-secondary transition-colors" title="Database">
-          <Database className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
 
-      {/* Separator */}
       <div className="w-px h-6 bg-border mr-2" />
 
       {/* Board tabs */}
@@ -74,11 +74,11 @@ const TopBar = ({
         <button
           onClick={onToggleZoomLock}
           className={`p-2 rounded-lg transition-colors ${zoomLocked ? 'bg-destructive text-destructive-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
-          title={zoomLocked ? 'Unlock Zoom' : 'Lock Zoom'}
+          title={zoomLocked ? 'Unlock Board' : 'Lock Board'}
         >
           {zoomLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
         </button>
-        <button className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground" title="Logout">
+        <button onClick={onLogout} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground" title="Logout">
           <LogOut className="w-4 h-4" />
         </button>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, FileText, Trash2, Copy, Plus,
+  Minus, Trash2, Copy, Plus,
 } from 'lucide-react';
 import { BoardElement as BoardElementType, TodoItem } from '@/types/board';
 
@@ -12,9 +12,10 @@ interface BoardElementProps {
   onUpdate: (updates: Partial<BoardElementType>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onResizeMouseDown: (corner: string, e: React.MouseEvent) => void;
 }
 
-const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDuplicate }: BoardElementProps) => {
+const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDuplicate, onResizeMouseDown }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
 
@@ -31,9 +32,7 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
 
   const toggleTodo = (todoId: string) => {
     if (!element.todos) return;
-    onUpdate({
-      todos: element.todos.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t),
-    });
+    onUpdate({ todos: element.todos.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t) });
   };
 
   const addTodo = () => {
@@ -43,15 +42,12 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
 
   const updateTodoText = (todoId: string, text: string) => {
     if (!element.todos) return;
-    onUpdate({
-      todos: element.todos.map(t => t.id === todoId ? { ...t, text } : t),
-    });
+    onUpdate({ todos: element.todos.map(t => t.id === todoId ? { ...t, text } : t) });
   };
 
-  // Background class based on element type
   const bgClass: Record<string, string> = {
     note: 'element-note', todo: 'element-todo', textbox: 'element-text',
-    checklist: 'element-checklist', file: 'element-file', image: 'element-image',
+    checklist: 'element-checklist', image: 'element-image',
   };
 
   const renderContent = () => {
@@ -69,7 +65,6 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             />
           </div>
         );
-
       case 'todo':
       case 'checklist':
         return (
@@ -105,7 +100,6 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             </button>
           </div>
         );
-
       case 'textbox':
         return (
           <div className="p-3 h-full flex flex-col">
@@ -118,7 +112,6 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             />
           </div>
         );
-
       case 'image':
         return (
           <div className="p-3 h-full flex flex-col items-center justify-center">
@@ -126,31 +119,18 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             <span className="text-xs text-muted-foreground">{element.title || 'Image Card'}</span>
           </div>
         );
-
       case 'divider':
         return (
           <div className="w-full h-full flex items-center px-2">
             <div className="w-full h-[2px] bg-border rounded-full" />
           </div>
         );
-
       case 'icon':
         return (
           <div className="w-full h-full flex items-center justify-center text-4xl select-none">
             {element.emoji || '📚'}
           </div>
         );
-
-      case 'file':
-        return (
-          <div className="p-3 h-full flex flex-col items-center justify-center gap-2">
-            <FileText className="w-10 h-10 text-muted-foreground/60" />
-            <span className="text-xs text-center text-foreground font-medium truncate w-full">
-              {element.fileName || 'File'}
-            </span>
-          </div>
-        );
-
       default:
         return null;
     }
@@ -180,7 +160,7 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
 
   return (
     <div
-      className={`absolute rounded-xl overflow-hidden transition-shadow select-none ${
+      className={`absolute rounded-xl overflow-visible transition-shadow select-none ${
         bgClass[element.type] || 'bg-card'
       } ${selected ? 'ring-2 ring-primary ios-shadow-lg' : 'ios-shadow hover:ios-shadow-lg'}`}
       style={{
@@ -192,7 +172,9 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
       }}
       onMouseDown={onMouseDown}
     >
-      {renderContent()}
+      <div className="w-full h-full overflow-hidden rounded-xl">
+        {renderContent()}
+      </div>
 
       {/* Selection toolbar */}
       {selected && (
@@ -214,6 +196,14 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             <Trash2 className="w-3.5 h-3.5 text-destructive" />
           </button>
         </div>
+      )}
+
+      {/* Resize handle (bottom-right corner) */}
+      {selected && element.type !== 'divider' && (
+        <div
+          className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full cursor-nwse-resize border-2 border-card ios-shadow-sm z-10"
+          onMouseDown={(e) => onResizeMouseDown('se', e)}
+        />
       )}
     </div>
   );

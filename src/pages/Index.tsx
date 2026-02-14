@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBoard } from '@/hooks/useBoard';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
@@ -9,11 +9,28 @@ import WaterReminder from '@/components/dashboard/WaterReminder';
 import WaterWidget from '@/components/dashboard/WaterWidget';
 import BatteryIcon from '@/components/dashboard/BatteryIcon';
 import NewBoardDialog from '@/components/dashboard/NewBoardDialog';
+import Login from '@/pages/Login';
 
 const Index = () => {
   const board = useBoard();
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [showNewBoard, setShowNewBoard] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+
+  // Auth state
+  const [user, setUser] = useState<string | null>(() => {
+    return localStorage.getItem('study-dashboard-user');
+  });
+
+  // MiniMap: show temporarily on pan/zoom
+  const [miniMapVisible, setMiniMapVisible] = useState(false);
+  const miniMapTimer = useRef<number | null>(null);
+
+  const showMiniMapTemporarily = useCallback(() => {
+    setMiniMapVisible(true);
+    if (miniMapTimer.current) clearTimeout(miniMapTimer.current);
+    miniMapTimer.current = window.setTimeout(() => setMiniMapVisible(false), 1500);
+  }, []);
 
   // Water reminder state
   const [showWaterReminder, setShowWaterReminder] = useState(() => {
@@ -37,20 +54,14 @@ const Index = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't handle if user is typing in an input/textarea
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (board.selectedElementId) {
-          board.deleteElement(board.selectedElementId);
-        }
+        if (board.selectedElementId) board.deleteElement(board.selectedElementId);
       }
       if (e.key === 'd' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-        if (board.selectedElementId) {
-          board.duplicateElement(board.selectedElementId);
-        }
+        if (board.selectedElementId) board.duplicateElement(board.selectedElementId);
       }
     };
     document.addEventListener('keydown', handler);
@@ -69,6 +80,23 @@ const Index = () => {
     localStorage.setItem('water-remind-at', String(Date.now() + 25 * 60 * 1000));
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('study-dashboard-user');
+    setUser(null);
+  };
+
+  const handleLogin = (username: string) => {
+    setUser(username);
+  };
+
+  // Home: switch to first board
+  const handleHome = () => {
+    if (board.boards.length > 0) board.switchBoard(board.boards[0].id);
+  };
+
+  // Show login if not authenticated
+  if (!user) return <Login onLogin={handleLogin} />;
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-background">
       <TopBar
@@ -81,6 +109,9 @@ const Index = () => {
         zoom={board.currentBoard.zoom}
         onTogglePomodoro={() => setShowPomodoro(!showPomodoro)}
         showPomodoro={showPomodoro}
+        onLogout={handleLogout}
+        onHome={handleHome}
+        onCalendar={() => setShowCalendar(!showCalendar)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -96,18 +127,48 @@ const Index = () => {
           onDuplicateElement={board.duplicateElement}
           onSetCamera={board.setCamera}
           onSetZoom={board.setZoom}
+          onInteraction={showMiniMapTemporarily}
         />
       </div>
 
-      {/* Floating widgets */}
+      {/* Floating widgets at top of board */}
       <PomodoroTimer visible={showPomodoro} onClose={() => setShowPomodoro(false)} />
       <MiniMap
         elements={board.currentBoard.elements}
         camera={board.currentBoard.camera}
         zoom={board.currentBoard.zoom}
+        visible={miniMapVisible}
       />
       <BatteryIcon />
       {showWaterWidget && <WaterWidget />}
+
+      {/* Calendar panel */}
+      {showCalendar && (
+        <div className="fixed top-12 right-0 z-50 w-80 h-[calc(100vh-48px)] glass ios-shadow-lg border-l border-border p-4 animate-slide-in-right overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-foreground">Calendar</h3>
+            <button onClick={() => setShowCalendar(false)} className="p-1 rounded-lg hover:bg-secondary transition-colors text-muted-foreground text-xs">✕</button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
+          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+            {['S','M','T','W','T','F','S'].map((d, i) => <span key={i} className="font-medium">{d}</span>)}
+            {Array.from({ length: 35 }, (_, i) => {
+              const today = new Date();
+              const first = new Date(today.getFullYear(), today.getMonth(), 1);
+              const dayNum = i - first.getDay() + 1;
+              const isToday = dayNum === today.getDate();
+              const inMonth = dayNum > 0 && dayNum <= new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+              return (
+                <span key={i} className={`py-1 rounded-lg ${isToday ? 'bg-primary text-primary-foreground font-semibold' : inMonth ? 'text-foreground' : 'text-muted-foreground/30'}`}>
+                  {inMonth ? dayNum : ''}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       {showWaterReminder && (
