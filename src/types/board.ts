@@ -1,4 +1,5 @@
-export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'file';
+// Element types available on the board (file removed per user request)
+export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon';
 
 export interface TodoItem {
   id: string;
@@ -40,6 +41,7 @@ export interface BoardState {
   currentBoardId: string;
 }
 
+// Default sizes for each element type
 export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height: number }> = {
   note: { width: 240, height: 200 },
   todo: { width: 260, height: 280 },
@@ -48,9 +50,9 @@ export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height:
   checklist: { width: 260, height: 300 },
   divider: { width: 300, height: 4 },
   icon: { width: 80, height: 80 },
-  file: { width: 120, height: 140 },
 };
 
+// Labels shown in sidebar
 export const ELEMENT_LABELS: Record<ElementType, string> = {
   note: 'Quick Note',
   todo: 'New To-Do List',
@@ -59,5 +61,4 @@ export const ELEMENT_LABELS: Record<ElementType, string> = {
   checklist: 'Checklist',
   divider: 'Divider',
   icon: 'Emoji',
-  file: 'File Icon',
 };

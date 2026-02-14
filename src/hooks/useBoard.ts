@@ -3,11 +3,12 @@ import { Board, BoardElement, BoardState, ElementType, DEFAULT_ELEMENT_SIZES } f
 
 const STORAGE_KEY = 'study-dashboard-boards';
 
+// Default board: black background with white grid dots
 const createDefaultBoard = (): Board => ({
   id: crypto.randomUUID(),
   name: 'My Board',
-  bgColor: 'hsl(220, 14%, 96%)',
-  gridColor: 'hsl(220, 14%, 82%)',
+  bgColor: 'hsl(0, 0%, 0%)',
+  gridColor: 'hsl(0, 0%, 100%)',
   showGrid: true,
   elements: [],
   camera: { x: 0, y: 0 },
@@ -78,7 +79,6 @@ export const useBoard = () => {
     if (type === 'textbox') { defaults.title = 'Quick Text'; defaults.content = 'Start typing...'; }
     if (type === 'checklist') { defaults.title = 'Checklist'; defaults.todos = [{ id: crypto.randomUUID(), text: 'Item 1', completed: false }]; }
     if (type === 'icon') defaults.emoji = '📚';
-    if (type === 'file') defaults.fileName = 'Document.pdf';
     if (type === 'image') defaults.title = 'Image Card';
 
     const newElement: BoardElement = {
