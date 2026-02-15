@@ -51,7 +51,7 @@ const PomodoroTimer = ({ visible, onClose, workMinutes = 25, breakMinutes = 5 }:
   if (!visible) return null;
 
   return (
-    <div className="fixed top-16 right-40 z-50 glass ios-shadow-lg rounded-2xl p-5 w-52 animate-scale-in">
+    <div className="fixed top-16 right-40 z-[9999] glass ios-shadow-lg rounded-2xl p-5 w-52 animate-scale-in pointer-events-auto">
       <div className="flex items-center justify-between mb-4">
         <span className={`text-xs font-semibold uppercase tracking-wider ${mode === 'work' ? 'text-primary' : 'text-emerald-500'}`}>
           {mode === 'work' ? 'Focus' : 'Break'}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, Smile, Settings, User,
+  Minus, Smile, Settings, User, GitBranch,
 } from 'lucide-react';
 import { ElementType, ELEMENT_LABELS } from '@/types/board';
 
@@ -13,6 +13,7 @@ const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string
   { type: 'checklist', icon: CheckSquare, color: 'text-emerald-500' },
   { type: 'divider', icon: Minus, color: 'text-muted-foreground' },
   { type: 'icon', icon: Smile, color: 'text-orange-500' },
+  { type: 'mindmap', icon: GitBranch, color: 'text-cyan-500' },
 ];
 
 interface SidebarProps {
