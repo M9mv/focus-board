@@ -142,5 +142,6 @@ export const useBoard = () => {
     addElement, updateElement, deleteElement,
     bringToFront, duplicateElement,
     setCamera, setZoom, toggleZoomLock,
+    updateCurrentBoard,
   };
 };

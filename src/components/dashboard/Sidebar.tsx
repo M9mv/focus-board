@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import { ElementType, ELEMENT_LABELS } from '@/types/board';
 
-// Sidebar items - File removed per user request
 const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string }[] = [
   { type: 'note', icon: StickyNote, color: 'text-amber-500' },
   { type: 'todo', icon: ListTodo, color: 'text-primary' },
@@ -16,7 +15,12 @@ const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string
   { type: 'icon', icon: Smile, color: 'text-orange-500' },
 ];
 
-const Sidebar = () => {
+interface SidebarProps {
+  onOpenSettings: () => void;
+  userName: string;
+}
+
+const Sidebar = ({ onOpenSettings, userName }: SidebarProps) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -31,13 +35,11 @@ const Sidebar = () => {
 
   return (
     <div className="w-56 bg-card border-r border-border flex flex-col shrink-0 animate-slide-in-left">
-      {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">Elements</h2>
         <p className="text-xs text-muted-foreground mt-0.5">Drag to canvas</p>
       </div>
 
-      {/* Draggable items */}
       <div className="flex-1 p-3 space-y-1.5 overflow-y-auto">
         {SIDEBAR_ITEMS.map(({ type, icon: Icon, color }) => (
           <div
@@ -52,13 +54,13 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* Footer: user info + time + settings */}
+      {/* Footer */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
             <User className="w-3.5 h-3.5 text-primary-foreground" />
           </div>
-          <span className="text-sm font-medium text-foreground">Student</span>
+          <span className="text-sm font-medium text-foreground truncate">{userName}</span>
         </div>
         <div className="text-xs text-muted-foreground">
           <div className="tabular-nums">
@@ -68,9 +70,8 @@ const Sidebar = () => {
             {time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
           </div>
         </div>
-        {/* Settings button only - info removed */}
         <div className="flex items-center gap-2 mt-3">
-          <button className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Settings">
+          <button onClick={onOpenSettings} className="p-1.5 rounded-lg hover:bg-secondary transition-colors" title="Settings">
             <Settings className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
         </div>

@@ -1,6 +1,6 @@
 import { useBattery } from '@/hooks/useBattery';
 
-// Battery icon - compact circle at top-left of board area
+// Battery icon - themed rounded square, top-right corner
 const BatteryIcon = () => {
   const { level, charging } = useBattery();
   if (level === null) return null;
@@ -12,7 +12,7 @@ const BatteryIcon = () => {
 
   return (
     <div
-      className="fixed top-16 left-[19rem] z-40 w-14 h-14 glass ios-shadow flex items-center justify-center animate-fade-in"
+      className="fixed top-16 right-4 z-40 w-14 h-14 rounded-2xl glass ios-shadow flex items-center justify-center animate-fade-in"
       title={`Battery: ${level}%${charging ? ' (charging)' : ''}`}
     >
       <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">

@@ -1,4 +1,4 @@
-// Element types available on the board (file removed per user request)
+// Element types available on the board
 export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon';
 
 export interface TodoItem {
@@ -21,6 +21,12 @@ export interface BoardElement {
   fileName?: string;
   todos?: TodoItem[];
   color?: string;
+  // Divider-specific
+  rotation?: number;       // degrees
+  thickness?: number;      // px
+  dividerColor?: string;   // HSL string
+  // Image-specific
+  imageUrl?: string;       // data URL or external URL
 }
 
 export interface Board {
@@ -40,6 +46,27 @@ export interface BoardState {
   boards: Board[];
   currentBoardId: string;
 }
+
+// App-level settings saved to localStorage
+export interface AppSettings {
+  snapToGrid: boolean;
+  showMiniMap: boolean;
+  theme: 'light' | 'dark' | 'custom';
+  pomodoroWork: number;   // minutes
+  pomodoroBreak: number;  // minutes
+  waterReminder: boolean;
+  pomodoroNotifications: boolean;
+}
+
+export const DEFAULT_SETTINGS: AppSettings = {
+  snapToGrid: true,
+  showMiniMap: true,
+  theme: 'light',
+  pomodoroWork: 25,
+  pomodoroBreak: 5,
+  waterReminder: true,
+  pomodoroNotifications: true,
+};
 
 // Default sizes for each element type
 export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height: number }> = {

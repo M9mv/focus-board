@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Droplets } from 'lucide-react';
 
-// Water widget - compact icon style, placed next to battery at top of board
+// Water widget - themed rounded square, top-right corner next to battery
 const WaterWidget = () => {
   const [glasses, setGlasses] = useState(() => {
     return parseInt(localStorage.getItem('water-glasses') || '0');
@@ -13,18 +13,16 @@ const WaterWidget = () => {
     localStorage.setItem('water-glasses', String(glasses));
   }, [glasses]);
 
-  // Side arc progress
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
 
   return (
     <div
-      className="fixed top-16 left-64 z-40 w-14 h-14 glass ios-shadow flex items-center justify-center cursor-pointer select-none animate-fade-in hover:ios-shadow-lg transition-shadow"
+      className="fixed top-16 right-20 z-40 w-14 h-14 rounded-2xl glass ios-shadow flex items-center justify-center cursor-pointer select-none animate-fade-in hover:ios-shadow-lg transition-shadow"
       onClick={() => setGlasses(g => Math.min(g + 1, target))}
       title={`Water: ${glasses}/${target} cups — click to log`}
     >
-      {/* Circular progress arc */}
       <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">
         <circle cx="28" cy="28" r={radius} fill="none" strokeWidth="3" className="stroke-secondary" />
         <circle cx="28" cy="28" r={radius} fill="none" strokeWidth="3"

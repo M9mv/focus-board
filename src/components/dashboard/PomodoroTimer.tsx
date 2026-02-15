@@ -4,13 +4,22 @@ import { Play, Pause, RotateCcw, X } from 'lucide-react';
 interface PomodoroTimerProps {
   visible: boolean;
   onClose: () => void;
+  workMinutes?: number;
+  breakMinutes?: number;
 }
 
-const PomodoroTimer = ({ visible, onClose }: PomodoroTimerProps) => {
+const PomodoroTimer = ({ visible, onClose, workMinutes = 25, breakMinutes = 5 }: PomodoroTimerProps) => {
   const [mode, setMode] = useState<'work' | 'break'>('work');
-  const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [timeLeft, setTimeLeft] = useState(workMinutes * 60);
   const [isRunning, setIsRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
+
+  // Reset when durations change
+  useEffect(() => {
+    if (!isRunning) {
+      setTimeLeft(mode === 'work' ? workMinutes * 60 : breakMinutes * 60);
+    }
+  }, [workMinutes, breakMinutes, mode, isRunning]);
 
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
@@ -19,32 +28,30 @@ const PomodoroTimer = ({ visible, onClose }: PomodoroTimerProps) => {
       }, 1000);
     } else if (timeLeft === 0 && isRunning) {
       setIsRunning(false);
-      // Notification
       if (Notification.permission === 'granted') {
         new Notification(mode === 'work' ? '🎉 Break time! Take a rest.' : '💪 Focus time! Back to work.');
       }
       const nextMode = mode === 'work' ? 'break' : 'work';
       setMode(nextMode);
-      setTimeLeft(nextMode === 'work' ? 25 * 60 : 5 * 60);
+      setTimeLeft(nextMode === 'work' ? workMinutes * 60 : breakMinutes * 60);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isRunning, timeLeft, mode]);
+  }, [isRunning, timeLeft, mode, workMinutes, breakMinutes]);
 
   const reset = () => {
     setIsRunning(false);
-    setTimeLeft(mode === 'work' ? 25 * 60 : 5 * 60);
+    setTimeLeft(mode === 'work' ? workMinutes * 60 : breakMinutes * 60);
   };
 
+  const totalTime = mode === 'work' ? workMinutes * 60 : breakMinutes * 60;
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
-  const progress = mode === 'work'
-    ? 1 - timeLeft / (25 * 60)
-    : 1 - timeLeft / (5 * 60);
+  const progress = 1 - timeLeft / totalTime;
 
   if (!visible) return null;
 
   return (
-    <div className="fixed top-16 right-52 z-50 glass ios-shadow-lg rounded-2xl p-5 w-52 animate-scale-in">
+    <div className="fixed top-16 right-40 z-50 glass ios-shadow-lg rounded-2xl p-5 w-52 animate-scale-in">
       <div className="flex items-center justify-between mb-4">
         <span className={`text-xs font-semibold uppercase tracking-wider ${mode === 'work' ? 'text-primary' : 'text-emerald-500'}`}>
           {mode === 'work' ? 'Focus' : 'Break'}
@@ -54,11 +61,9 @@ const PomodoroTimer = ({ visible, onClose }: PomodoroTimerProps) => {
         </button>
       </div>
 
-      {/* Circular progress */}
       <div className="relative w-28 h-28 mx-auto mb-4">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="44" fill="none" strokeWidth="6"
-            className="stroke-secondary" />
+          <circle cx="50" cy="50" r="44" fill="none" strokeWidth="6" className="stroke-secondary" />
           <circle cx="50" cy="50" r="44" fill="none" strokeWidth="6"
             className={mode === 'work' ? 'stroke-primary' : 'stroke-emerald-500'}
             strokeLinecap="round"
