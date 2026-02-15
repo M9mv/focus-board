@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
-  StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, Trash2, Copy, Plus,
+  ImageIcon, CheckSquare,
+  Trash2, Copy, Plus, RotateCw, Palette,
 } from 'lucide-react';
 import { BoardElement as BoardElementType, TodoItem } from '@/types/board';
 
@@ -18,6 +18,7 @@ interface BoardElementProps {
 const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDuplicate, onResizeMouseDown }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleTitleDoubleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -45,11 +46,46 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     onUpdate({ todos: element.todos.map(t => t.id === todoId ? { ...t, text } : t) });
   };
 
+  // Image upload handler
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      onUpdate({ imageUrl: ev.target?.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const bgClass: Record<string, string> = {
     note: 'element-note', todo: 'element-todo', textbox: 'element-text',
     checklist: 'element-checklist', image: 'element-image',
   };
 
+  // Render title bar for note/todo/textbox/checklist
+  const renderTitle = () => {
+    if (!element.title && element.title !== '') return null;
+    return editingTitle ? (
+      <input
+        ref={titleRef}
+        className="text-sm font-semibold bg-transparent outline-none border-b border-primary/30 text-foreground"
+        defaultValue={element.title}
+        onBlur={handleTitleBlur}
+        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+        onMouseDown={(e) => e.stopPropagation()}
+        autoFocus
+      />
+    ) : (
+      <h3
+        className="text-sm font-semibold text-foreground truncate cursor-text"
+        onDoubleClick={handleTitleDoubleClick}
+      >
+        {element.title}
+      </h3>
+    );
+  };
+
+  // Render inner content based on element type
   const renderContent = () => {
     switch (element.type) {
       case 'note':
@@ -115,14 +151,42 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
       case 'image':
         return (
           <div className="p-3 h-full flex flex-col items-center justify-center">
-            <ImageIcon className="w-12 h-12 text-muted-foreground/40 mb-2" />
-            <span className="text-xs text-muted-foreground">{element.title || 'Image Card'}</span>
+            {element.imageUrl ? (
+              <img
+                src={element.imageUrl}
+                alt={element.title || 'Image'}
+                className="w-full h-full object-cover rounded-lg"
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full h-full"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
+                <span className="text-xs text-muted-foreground">Click to add image</span>
+              </div>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+            />
           </div>
         );
       case 'divider':
         return (
-          <div className="w-full h-full flex items-center px-2">
-            <div className="w-full h-[2px] bg-border rounded-full" />
+          <div className="w-full h-full flex items-center justify-center px-1">
+            <div
+              className="w-full rounded-full"
+              style={{
+                height: element.thickness || 2,
+                backgroundColor: element.dividerColor || 'hsl(var(--border))',
+              }}
+            />
           </div>
         );
       case 'icon':
@@ -136,49 +200,93 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     }
   };
 
-  const renderTitle = () => {
-    if (!element.title && element.title !== '') return null;
-    return editingTitle ? (
-      <input
-        ref={titleRef}
-        className="text-sm font-semibold bg-transparent outline-none border-b border-primary/30 text-foreground"
-        defaultValue={element.title}
-        onBlur={handleTitleBlur}
-        onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+  // Divider toolbar extras
+  const renderDividerToolbar = () => {
+    if (element.type !== 'divider' || !selected) return null;
+    return (
+      <>
+        {/* Rotate button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onUpdate({ rotation: ((element.rotation || 0) + 15) % 360 });
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="p-1 rounded hover:bg-secondary transition-colors"
+          title="Rotate 15°"
+        >
+          <RotateCw className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+        {/* Color picker for divider */}
+        <label className="p-1 rounded hover:bg-secondary transition-colors cursor-pointer" title="Color">
+          <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            type="color"
+            className="sr-only"
+            onChange={(e) => {
+              const hex = e.target.value;
+              onUpdate({ dividerColor: hex });
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          />
+        </label>
+        {/* Thickness controls */}
+        <button
+          onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.max(1, (element.thickness || 2) - 1) }); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold"
+          title="Thinner"
+        >−</button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.min(20, (element.thickness || 2) + 1) }); }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold"
+          title="Thicker"
+        >+</button>
+      </>
+    );
+  };
+
+  // Image replace button
+  const renderImageToolbar = () => {
+    if (element.type !== 'image' || !selected || !element.imageUrl) return null;
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
         onMouseDown={(e) => e.stopPropagation()}
-        autoFocus
-      />
-    ) : (
-      <h3
-        className="text-sm font-semibold text-foreground truncate cursor-text"
-        onDoubleClick={handleTitleDoubleClick}
+        className="p-1 rounded hover:bg-secondary transition-colors"
+        title="Replace image"
       >
-        {element.title}
-      </h3>
+        <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
+      </button>
     );
   };
 
   return (
     <div
-      className={`absolute rounded-xl overflow-visible transition-shadow select-none ${
-        bgClass[element.type] || 'bg-card'
-      } ${selected ? 'ring-2 ring-primary ios-shadow-lg' : 'ios-shadow hover:ios-shadow-lg'}`}
+      className={`absolute overflow-visible transition-shadow select-none ${
+        element.type === 'divider' ? '' : `rounded-xl ${bgClass[element.type] || 'bg-card'}`
+      } ${selected ? 'ring-2 ring-primary ios-shadow-lg' : element.type === 'divider' ? '' : 'ios-shadow hover:ios-shadow-lg'}`}
       style={{
         left: element.x,
         top: element.y,
         width: element.width,
-        height: element.height,
+        height: element.type === 'divider' ? Math.max(element.height, 20) : element.height,
         zIndex: element.zIndex,
+        transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
+        transformOrigin: 'center center',
       }}
       onMouseDown={onMouseDown}
     >
-      <div className="w-full h-full overflow-hidden rounded-xl">
+      <div className={`w-full h-full overflow-hidden ${element.type !== 'divider' ? 'rounded-xl' : ''}`}>
         {renderContent()}
       </div>
 
       {/* Selection toolbar */}
       {selected && (
         <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 glass rounded-lg px-1.5 py-1 ios-shadow-sm animate-scale-in">
+          {renderDividerToolbar()}
+          {renderImageToolbar()}
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
             onMouseDown={(e) => e.stopPropagation()}
@@ -198,8 +306,8 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         </div>
       )}
 
-      {/* Resize handle (bottom-right corner) */}
-      {selected && element.type !== 'divider' && (
+      {/* Resize handle */}
+      {selected && (
         <div
           className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full cursor-nwse-resize border-2 border-card ios-shadow-sm z-10"
           onMouseDown={(e) => onResizeMouseDown('se', e)}

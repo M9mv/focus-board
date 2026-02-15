@@ -13,13 +13,15 @@ interface CanvasProps {
   onDuplicateElement: (id: string) => void;
   onSetCamera: (camera: { x: number; y: number }) => void;
   onSetZoom: (zoom: number) => void;
-  onInteraction?: () => void; // notify parent of pan/zoom for minimap
+  onInteraction?: () => void;
+  snapToGrid?: boolean;
 }
 
 const Canvas = ({
   board, selectedElementId, onAddElement, onUpdateElement,
   onDeleteElement, onSelectElement, onBringToFront,
   onDuplicateElement, onSetCamera, onSetZoom, onInteraction,
+  snapToGrid = true,
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const isPanning = useRef(false);
@@ -37,6 +39,8 @@ const Canvas = ({
   useEffect(() => { cameraRef.current = board.camera; }, [board.camera]);
   useEffect(() => { zoomRef.current = board.zoom; }, [board.zoom]);
   useEffect(() => { zoomLockedRef.current = board.zoomLocked; }, [board.zoomLocked]);
+
+  const snap = (val: number) => snapToGrid ? Math.round(val / 20) * 20 : val;
 
   // Wheel zoom - blocked when locked
   useEffect(() => {
@@ -74,17 +78,16 @@ const Canvas = ({
         const z = zoomRef.current;
         const dx = (e.clientX - dragStart.current.x) / z;
         const dy = (e.clientY - dragStart.current.y) / z;
-        const newX = Math.round((dragStart.current.elX + dx) / 20) * 20;
-        const newY = Math.round((dragStart.current.elY + dy) / 20) * 20;
+        const newX = snap(dragStart.current.elX + dx);
+        const newY = snap(dragStart.current.elY + dy);
         onUpdateElement(dragStart.current.elementId, { x: newX, y: newY });
       }
-      // Resize handling
       if (isResizing.current) {
         const z = zoomRef.current;
         const dx = (e.clientX - resizeStart.current.x) / z;
         const dy = (e.clientY - resizeStart.current.y) / z;
-        const newW = Math.max(60, Math.round((resizeStart.current.elW + dx) / 20) * 20);
-        const newH = Math.max(40, Math.round((resizeStart.current.elH + dy) / 20) * 20);
+        const newW = Math.max(60, snap(resizeStart.current.elW + dx));
+        const newH = Math.max(20, snap(resizeStart.current.elH + dy));
         onUpdateElement(resizeStart.current.elementId, { width: newW, height: newH });
       }
     };
@@ -102,12 +105,11 @@ const Canvas = ({
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
     return () => { document.removeEventListener('mousemove', handleMove); document.removeEventListener('mouseup', handleUp); };
-  }, [onSetCamera, onUpdateElement, onSelectElement]);
+  }, [onSetCamera, onUpdateElement, onSelectElement, snapToGrid]);
 
-  // Canvas mousedown → start panning (blocked when locked)
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
-    if (board.zoomLocked) return; // lock prevents panning too
+    if (board.zoomLocked) return;
     isPanning.current = true;
     panStart.current = { x: e.clientX, y: e.clientY, camX: board.camera.x, camY: board.camera.y };
     mouseDownPos.current = { x: e.clientX, y: e.clientY };
@@ -115,7 +117,6 @@ const Canvas = ({
     onInteraction?.();
   };
 
-  // Element mousedown → start dragging
   const handleElementMouseDown = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const el = board.elements.find(el => el.id === id);
@@ -128,7 +129,6 @@ const Canvas = ({
     setCursorClass('cursor-grabbing');
   }, [board.elements, onBringToFront, onSelectElement]);
 
-  // Resize handle mousedown
   const handleResizeMouseDown = useCallback((id: string, corner: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const el = board.elements.find(el => el.id === id);
@@ -138,7 +138,6 @@ const Canvas = ({
     setCursorClass('cursor-nwse-resize');
   }, [board.elements]);
 
-  // Handle drop from sidebar
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const type = e.dataTransfer.getData('element-type') as ElementType;
@@ -149,7 +148,6 @@ const Canvas = ({
     onAddElement(type, x, y);
   };
 
-  // Grid background
   const gridSize = 20 * board.zoom;
   const gridStyle = board.showGrid ? {
     backgroundImage: `radial-gradient(circle, ${board.gridColor} 1px, transparent 1px)`,
