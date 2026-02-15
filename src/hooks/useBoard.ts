@@ -80,6 +80,14 @@ export const useBoard = () => {
     if (type === 'checklist') { defaults.title = 'Checklist'; defaults.todos = [{ id: crypto.randomUUID(), text: 'Item 1', completed: false }]; }
     if (type === 'icon') defaults.emoji = '📚';
     if (type === 'image') defaults.title = 'Image Card';
+    if (type === 'mindmap') {
+      defaults.title = 'Mind Map';
+      const centerId = crypto.randomUUID();
+      defaults.mindmapNodes = [
+        { id: centerId, x: 200, y: 160, width: 100, height: 40, label: 'Central Idea', color: 'hsl(210,80%,60%)' },
+      ];
+      defaults.mindmapConnections = [];
+    }
 
     const newElement: BoardElement = {
       id: crypto.randomUUID(),

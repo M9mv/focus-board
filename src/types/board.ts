@@ -1,5 +1,5 @@
 // Element types available on the board
-export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon';
+export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'mindmap';
 
 export interface TodoItem {
   id: string;
@@ -27,6 +27,26 @@ export interface BoardElement {
   dividerColor?: string;   // HSL string
   // Image-specific
   imageUrl?: string;       // data URL or external URL
+  // Mind map specific
+  mindmapNodes?: MindMapNode[];
+  mindmapConnections?: MindMapConnection[];
+}
+
+export interface MindMapNode {
+  id: string;
+  x: number;       // relative to element origin
+  y: number;
+  width: number;
+  height: number;
+  label: string;
+  emoji?: string;
+  color?: string;
+}
+
+export interface MindMapConnection {
+  id: string;
+  fromNodeId: string;
+  toNodeId: string;
 }
 
 export interface Board {
@@ -77,6 +97,7 @@ export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height:
   checklist: { width: 260, height: 300 },
   divider: { width: 300, height: 4 },
   icon: { width: 80, height: 80 },
+  mindmap: { width: 500, height: 400 },
 };
 
 // Labels shown in sidebar
@@ -88,4 +109,5 @@ export const ELEMENT_LABELS: Record<ElementType, string> = {
   checklist: 'Checklist',
   divider: 'Divider',
   icon: 'Emoji',
+  mindmap: 'Mind Map',
 };
