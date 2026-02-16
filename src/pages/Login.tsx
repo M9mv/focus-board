@@ -3,10 +3,10 @@ import { User, Lock, LogIn } from 'lucide-react';
 
 interface LoginProps {
   onLogin: (username: string) => void;
+  t?: (key: string) => string;
 }
 
-// Simple local login page - iPhone/Apple style
-const Login = ({ onLogin }: LoginProps) => {
+const Login = ({ onLogin, t }: LoginProps) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,8 +30,8 @@ const Login = ({ onLogin }: LoginProps) => {
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
             <LogIn className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-xl font-semibold text-foreground">Study Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-1">Sign in to continue</p>
+          <h1 className="text-xl font-semibold text-foreground">{t?.('welcome') || 'Study Dashboard'}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t?.('enterName') || 'Sign in to continue'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

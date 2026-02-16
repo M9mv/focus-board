@@ -3,9 +3,11 @@ import { ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 
 interface CalendarPageProps {
   onBack: () => void;
+  t?: (key: string) => string;
+  isRTL?: boolean;
 }
 
-const CalendarPage = ({ onBack }: CalendarPageProps) => {
+const CalendarPage = ({ onBack, t, isRTL }: CalendarPageProps) => {
   const [viewDate, setViewDate] = useState(new Date());
   const today = new Date();
 
