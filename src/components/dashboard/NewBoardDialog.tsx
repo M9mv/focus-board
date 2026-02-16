@@ -5,6 +5,7 @@ interface NewBoardDialogProps {
   open: boolean;
   onClose: () => void;
   onCreateBoard: (name: string, bgColor: string, gridColor: string, showGrid: boolean) => void;
+  t?: (key: string) => string;
 }
 
 // Preset background colors including black and white
@@ -26,7 +27,7 @@ const GRID_PRESETS = [
   { label: 'Pink', value: 'hsl(330, 40%, 80%)' },
 ];
 
-const NewBoardDialog = ({ open, onClose, onCreateBoard }: NewBoardDialogProps) => {
+const NewBoardDialog = ({ open, onClose, onCreateBoard, t }: NewBoardDialogProps) => {
   const [name, setName] = useState('');
   const [bgColor, setBgColor] = useState(BG_PRESETS[0].value);
   const [gridColor, setGridColor] = useState(GRID_PRESETS[0].value);

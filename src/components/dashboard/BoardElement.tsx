@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, memo } from 'react';
 import {
   ImageIcon, Trash2, Copy, Plus, RotateCw, Palette, Smile,
 } from 'lucide-react';
@@ -16,21 +16,24 @@ interface BoardElementProps {
   element: BoardElementType;
   selected: boolean;
   onMouseDown: (e: React.MouseEvent) => void;
+  onTouchStart?: (e: React.TouchEvent) => void;
   onUpdate: (updates: Partial<BoardElementType>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onResizeMouseDown: (corner: string, e: React.MouseEvent) => void;
+  onResizeTouchStart?: (corner: string, e: React.TouchEvent) => void;
+  isRTL?: boolean;
+  t?: (key: string) => string;
 }
 
-const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDuplicate, onResizeMouseDown }: BoardElementProps) => {
+const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpdate, onDelete, onDuplicate, onResizeMouseDown, onResizeTouchStart, isRTL, t }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mind map: dragging node
-  const [draggingNode, setDraggingNode] = useState<string | null>(null);
-  const nodeDragStart = useRef({ x: 0, y: 0, nodeX: 0, nodeY: 0 });
+  // Mind map state
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
 
   const handleTitleDoubleClick = (e: React.MouseEvent) => {
@@ -50,7 +53,7 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
   };
 
   const addTodo = () => {
-    const newTodo: TodoItem = { id: crypto.randomUUID(), text: 'New task', completed: false };
+    const newTodo: TodoItem = { id: crypto.randomUUID(), text: t?.('newTask') || 'New task', completed: false };
     onUpdate({ todos: [...(element.todos || []), newTodo] });
   };
 
@@ -79,23 +82,22 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     const newNode: MindMapNode = {
       id: crypto.randomUUID(),
       x: 50 + Math.random() * 300,
-      y: 50 + Math.random() * 250,
-      width: 100, height: 36,
-      label: 'New Node',
+      y: 60 + Math.random() * 250,
+      width: 110, height: 38,
+      label: t?.('newNode') || 'New Node',
       color: `hsl(${Math.floor(Math.random() * 360)},70%,60%)`,
     };
     onUpdate({ mindmapNodes: [...nodes, newNode] });
-  }, [element.mindmapNodes, onUpdate]);
+  }, [element.mindmapNodes, onUpdate, t]);
 
-  const handleNodeMouseDown = useCallback((nodeId: string, e: React.MouseEvent) => {
+  const handleNodePointerDown = useCallback((nodeId: string, clientX: number, clientY: number, e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    // Connection mode
     if (connectingFrom === '__pick__') {
-      // First node selected - set as source
       setConnectingFrom(nodeId);
       return;
     }
     if (connectingFrom && connectingFrom !== '__pick__') {
-      // Second node selected - complete connection
       if (connectingFrom !== nodeId) {
         const conns = element.mindmapConnections || [];
         const exists = conns.some(c =>
@@ -111,26 +113,40 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
       setConnectingFrom(null);
       return;
     }
+
+    // Drag node
     const node = element.mindmapNodes?.find(n => n.id === nodeId);
     if (!node) return;
-    setDraggingNode(nodeId);
-    nodeDragStart.current = { x: e.clientX, y: e.clientY, nodeX: node.x, nodeY: node.y };
+    const startX = clientX;
+    const startY = clientY;
+    const nodeX = node.x;
+    const nodeY = node.y;
 
-    const handleMove = (ev: MouseEvent) => {
-      const dx = ev.clientX - nodeDragStart.current.x;
-      const dy = ev.clientY - nodeDragStart.current.y;
+    const handleMove = (mx: number, my: number) => {
+      const dx = mx - startX;
+      const dy = my - startY;
       const updated = (element.mindmapNodes || []).map(n =>
-        n.id === nodeId ? { ...n, x: nodeDragStart.current.nodeX + dx, y: nodeDragStart.current.nodeY + dy } : n
+        n.id === nodeId ? { ...n, x: nodeX + dx, y: nodeY + dy } : n
       );
       onUpdate({ mindmapNodes: updated });
     };
-    const handleUp = () => {
-      setDraggingNode(null);
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleUp);
+
+    const handleMouseMove = (ev: MouseEvent) => handleMove(ev.clientX, ev.clientY);
+    const handleTouchMove = (ev: TouchEvent) => {
+      ev.preventDefault();
+      const touch = ev.touches[0];
+      if (touch) handleMove(touch.clientX, touch.clientY);
     };
-    document.addEventListener('mousemove', handleMove);
+    const handleUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('mouseup', handleUp);
+      document.removeEventListener('touchend', handleUp);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('mouseup', handleUp);
+    document.addEventListener('touchend', handleUp);
   }, [connectingFrom, element.mindmapNodes, element.mindmapConnections, onUpdate]);
 
   const updateNodeLabel = useCallback((nodeId: string, label: string) => {
@@ -156,11 +172,12 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     return editingTitle ? (
       <input
         ref={titleRef}
-        className="text-sm font-semibold bg-transparent outline-none border-b border-primary/30 text-foreground"
+        className="text-sm font-semibold bg-transparent outline-none border-b border-primary/30 text-foreground w-full"
         defaultValue={element.title}
         onBlur={handleTitleBlur}
         onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
         autoFocus
       />
     ) : (
@@ -170,6 +187,8 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     );
   };
 
+  const stopProp = (e: React.MouseEvent | React.TouchEvent) => e.stopPropagation();
+
   const renderContent = () => {
     switch (element.type) {
       case 'note':
@@ -178,10 +197,11 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             {renderTitle()}
             <textarea
               className="flex-1 bg-transparent text-sm resize-none outline-none text-foreground/80 mt-2 placeholder:text-muted-foreground"
-              placeholder="Write your note..."
+              placeholder={t?.('writeNote') || 'Write your note...'}
               value={element.content || ''}
               onChange={(e) => onUpdate({ content: e.target.value })}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={stopProp}
+              onTouchStart={stopProp}
             />
           </div>
         );
@@ -195,7 +215,8 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
                 <div key={todo.id} className="flex items-center gap-2">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleTodo(todo.id); }}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseDown={stopProp}
+                    onTouchStart={stopProp}
                     className={`w-4 h-4 rounded border-2 shrink-0 flex items-center justify-center transition-colors ${
                       todo.completed ? 'bg-primary border-primary' : 'border-muted-foreground/40'
                     }`}
@@ -206,17 +227,19 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
                     className={`flex-1 bg-transparent text-sm outline-none ${todo.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}
                     value={todo.text}
                     onChange={(e) => updateTodoText(todo.id, e.target.value)}
-                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseDown={stopProp}
+                    onTouchStart={stopProp}
                   />
                 </div>
               ))}
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); addTodo(); }}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={stopProp}
+              onTouchStart={stopProp}
               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 mt-2"
             >
-              <Plus className="w-3 h-3" /> Add item
+              <Plus className="w-3 h-3" /> {t?.('addItem') || 'Add item'}
             </button>
           </div>
         );
@@ -228,7 +251,8 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
               className="flex-1 bg-transparent text-sm resize-none outline-none text-foreground/80 mt-2"
               value={element.content || ''}
               onChange={(e) => onUpdate({ content: e.target.value })}
-              onMouseDown={(e) => e.stopPropagation()}
+              onMouseDown={stopProp}
+              onTouchStart={stopProp}
             />
           </div>
         );
@@ -236,11 +260,16 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         return (
           <div className="p-3 h-full flex flex-col items-center justify-center">
             {element.imageUrl ? (
-              <img src={element.imageUrl} alt={element.title || 'Image'} className="w-full h-full object-cover rounded-lg" onMouseDown={(e) => e.stopPropagation()} />
+              <img src={element.imageUrl} alt={element.title || 'Image'} className="w-full h-full object-cover rounded-lg" onMouseDown={stopProp} />
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full h-full" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} onMouseDown={(e) => e.stopPropagation()}>
+              <div
+                className="flex flex-col items-center justify-center gap-2 cursor-pointer w-full h-full"
+                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                onMouseDown={stopProp}
+                onTouchStart={stopProp}
+              >
                 <ImageIcon className="w-10 h-10 text-muted-foreground/40" />
-                <span className="text-xs text-muted-foreground">Click to add image</span>
+                <span className="text-xs text-muted-foreground">{t?.('clickToAddImage') || 'Click to add image'}</span>
               </div>
             )}
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
@@ -254,13 +283,42 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         );
       case 'icon':
         return (
-          <div className="w-full h-full flex items-center justify-center text-4xl select-none cursor-pointer relative" onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}>
-            {element.emoji || '📚'}
+          <div
+            className="w-full h-full flex items-center justify-center text-4xl select-none cursor-pointer relative group"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => { setHovered(false); setShowEmojiPicker(false); }}
+          >
+            {/* Show emoji or placeholder */}
+            {element.emoji ? (
+              <span className="transition-transform hover:scale-110">{element.emoji}</span>
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Smile className="w-8 h-8 text-muted-foreground/30" />
+              </div>
+            )}
+
+            {/* Hover button to open picker */}
+            {(hovered || showEmojiPicker) && (
+              <button
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs ios-shadow-sm animate-scale-in z-50"
+                onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+                onMouseDown={stopProp}
+                onTouchStart={stopProp}
+              >
+                <Smile className="w-3 h-3" />
+              </button>
+            )}
+
             {/* Emoji picker dropdown */}
             {showEmojiPicker && (
-              <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in" onMouseDown={(e) => e.stopPropagation()}>
+              <div
+                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in"
+                onMouseDown={stopProp}
+                onTouchStart={stopProp}
+                onMouseEnter={() => setHovered(true)}
+              >
                 {EMOJI_GRID.map(em => (
-                  <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors">
+                  <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
                     {em}
                   </button>
                 ))}
@@ -270,15 +328,19 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         );
       case 'mindmap':
         return (
-          <div className="w-full h-full relative overflow-hidden" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="w-full h-full relative overflow-hidden" onMouseDown={stopProp} onTouchStart={stopProp}>
             {/* Title bar */}
             <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between z-10 bg-card/60 backdrop-blur-sm border-b border-border/30">
               {renderTitle()}
               <div className="flex gap-1">
-                <button onClick={addMindMapNode} className="p-1 rounded-lg hover:bg-secondary transition-colors" title="Add node">
+                <button onClick={addMindMapNode} className="p-1 rounded-lg hover:bg-secondary transition-colors" title={t?.('newNode') || 'Add node'}>
                   <Plus className="w-3.5 h-3.5 text-muted-foreground" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); setConnectingFrom(connectingFrom ? null : '__pick__'); }} className={`p-1 rounded-lg transition-colors ${connectingFrom ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`} title={connectingFrom ? 'Cancel connecting' : 'Connect nodes'}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConnectingFrom(connectingFrom ? null : '__pick__'); }}
+                  className={`p-1 rounded-lg transition-colors ${connectingFrom ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
+                  title={connectingFrom ? (t?.('cancelConnecting') || 'Cancel') : (t?.('connectNodes') || 'Connect nodes')}
+                >
                   <span className="text-xs font-bold">🔗</span>
                 </button>
               </div>
@@ -289,10 +351,16 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
                 const from = element.mindmapNodes?.find(n => n.id === conn.fromNodeId);
                 const to = element.mindmapNodes?.find(n => n.id === conn.toNodeId);
                 if (!from || !to) return null;
+                const x1 = from.x + from.width / 2;
+                const y1 = from.y + from.height / 2;
+                const x2 = to.x + to.width / 2;
+                const y2 = to.y + to.height / 2;
+                // Bezier curve for smooth connections
+                const mx = (x1 + x2) / 2;
                 return (
-                  <line key={conn.id}
-                    x1={from.x + from.width / 2} y1={from.y + from.height / 2}
-                    x2={to.x + to.width / 2} y2={to.y + to.height / 2}
+                  <path key={conn.id}
+                    d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
+                    fill="none"
                     stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" opacity="0.6"
                   />
                 );
@@ -302,16 +370,21 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             {(element.mindmapNodes || []).map(node => (
               <div
                 key={node.id}
-                className={`absolute rounded-xl px-2 py-1 text-xs font-medium cursor-move flex items-center gap-1 ios-shadow-sm select-none border border-white/20 ${connectingFrom ? 'ring-2 ring-primary/50 cursor-crosshair' : ''}`}
-                style={{ left: node.x, top: node.y, width: node.width, backgroundColor: node.color || 'hsl(var(--primary))', color: '#fff', zIndex: 1 }}
-                onMouseDown={(e) => handleNodeMouseDown(node.id, e)}
+                className={`absolute rounded-xl px-2 py-1 text-xs font-medium cursor-move flex items-center gap-1 ios-shadow-sm select-none border border-white/20 transition-shadow ${connectingFrom ? 'ring-2 ring-primary/50 cursor-crosshair' : 'hover:ios-shadow-lg'}`}
+                style={{ left: node.x, top: node.y, width: node.width, backgroundColor: node.color || 'hsl(var(--primary))', color: '#fff', zIndex: 1, touchAction: 'none' }}
+                onMouseDown={(e) => handleNodePointerDown(node.id, e.clientX, e.clientY, e)}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  if (touch) handleNodePointerDown(node.id, touch.clientX, touch.clientY, e);
+                }}
               >
                 {node.emoji && <span className="text-sm">{node.emoji}</span>}
                 <input
                   className="bg-transparent outline-none text-white text-xs flex-1 min-w-0"
                   value={node.label}
                   onChange={(e) => updateNodeLabel(node.id, e.target.value)}
-                  onMouseDown={(e) => e.stopPropagation()}
+                  onMouseDown={stopProp}
+                  onTouchStart={stopProp}
                 />
                 <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="opacity-50 hover:opacity-100 text-white shrink-0">
                   <Trash2 className="w-3 h-3" />
@@ -320,7 +393,7 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
             ))}
             {connectingFrom === '__pick__' && (
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-card/80 px-3 py-1 rounded-full backdrop-blur-sm z-10">
-                Click a node to start connecting
+                {t?.('clickNodeToConnect') || 'Click a node to start connecting'}
               </div>
             )}
           </div>
@@ -335,15 +408,15 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
     if (element.type !== 'divider' || !selected) return null;
     return (
       <>
-        <button onClick={(e) => { e.stopPropagation(); onUpdate({ rotation: ((element.rotation || 0) + 15) % 360 }); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-secondary transition-colors" title="Rotate 15°">
+        <button onClick={(e) => { e.stopPropagation(); onUpdate({ rotation: ((element.rotation || 0) + 15) % 360 }); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors" title={t?.('rotate') || 'Rotate 15°'}>
           <RotateCw className="w-3.5 h-3.5 text-muted-foreground" />
         </button>
-        <label className="p-1 rounded hover:bg-secondary transition-colors cursor-pointer" title="Color">
+        <label className="p-1 rounded hover:bg-secondary transition-colors cursor-pointer" title={t?.('color') || 'Color'}>
           <Palette className="w-3.5 h-3.5 text-muted-foreground" />
-          <input type="color" className="sr-only" onChange={(e) => onUpdate({ dividerColor: e.target.value })} onMouseDown={(e) => e.stopPropagation()} />
+          <input type="color" className="sr-only" onChange={(e) => onUpdate({ dividerColor: e.target.value })} onMouseDown={stopProp} />
         </label>
-        <button onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.max(1, (element.thickness || 2) - 1) }); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold" title="Thinner">−</button>
-        <button onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.min(20, (element.thickness || 2) + 1) }); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold" title="Thicker">+</button>
+        <button onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.max(1, (element.thickness || 2) - 1) }); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold" title={t?.('thinner') || 'Thinner'}>−</button>
+        <button onClick={(e) => { e.stopPropagation(); onUpdate({ thickness: Math.min(20, (element.thickness || 2) + 1) }); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors text-xs text-muted-foreground font-bold" title={t?.('thicker') || 'Thicker'}>+</button>
       </>
     );
   };
@@ -351,7 +424,7 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
   const renderImageToolbar = () => {
     if (element.type !== 'image' || !selected || !element.imageUrl) return null;
     return (
-      <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-secondary transition-colors" title="Replace image">
+      <button onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors" title={t?.('replaceImage') || 'Replace image'}>
         <ImageIcon className="w-3.5 h-3.5 text-muted-foreground" />
       </button>
     );
@@ -369,8 +442,10 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         zIndex: element.zIndex,
         transform: element.rotation ? `rotate(${element.rotation}deg)` : undefined,
         transformOrigin: 'center center',
+        touchAction: 'none',
       }}
       onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
     >
       <div className={`w-full h-full overflow-hidden ${element.type !== 'divider' ? 'rounded-xl' : ''}`}>
         {renderContent()}
@@ -381,10 +456,10 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
         <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 glass rounded-lg px-1.5 py-1 ios-shadow-sm animate-scale-in">
           {renderDividerToolbar()}
           {renderImageToolbar()}
-          <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-secondary transition-colors" title="Duplicate">
+          <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors" title={t?.('duplicate') || 'Duplicate'}>
             <Copy className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
-          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} onMouseDown={(e) => e.stopPropagation()} className="p-1 rounded hover:bg-destructive/10 transition-colors" title="Delete">
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-destructive/10 transition-colors" title={t?.('delete') || 'Delete'}>
             <Trash2 className="w-3.5 h-3.5 text-destructive" />
           </button>
         </div>
@@ -392,10 +467,16 @@ const BoardElement = ({ element, selected, onMouseDown, onUpdate, onDelete, onDu
 
       {/* Resize handle */}
       {selected && (
-        <div className="absolute -bottom-1.5 -right-1.5 w-4 h-4 bg-primary rounded-full cursor-nwse-resize border-2 border-card ios-shadow-sm z-10" onMouseDown={(e) => onResizeMouseDown('se', e)} />
+        <div
+          className="absolute -bottom-1.5 -right-1.5 w-5 h-5 bg-primary rounded-full cursor-nwse-resize border-2 border-card ios-shadow-sm z-10"
+          onMouseDown={(e) => onResizeMouseDown('se', e)}
+          onTouchStart={(e) => onResizeTouchStart?.('se', e)}
+        />
       )}
     </div>
   );
-};
+});
+
+BoardElement.displayName = 'BoardElement';
 
 export default BoardElement;

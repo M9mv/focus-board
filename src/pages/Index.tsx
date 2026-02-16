@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBoard } from '@/hooks/useBoard';
 import { useSettings } from '@/hooks/useSettings';
+import { useLanguage } from '@/i18n/useLanguage';
+import { ElementType } from '@/types/board';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Canvas from '@/components/dashboard/Canvas';
@@ -17,6 +19,7 @@ import Login from '@/pages/Login';
 const Index = () => {
   const board = useBoard();
   const { settings, updateSettings } = useSettings();
+  const { lang, setLang, t, isRTL } = useLanguage();
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -57,6 +60,22 @@ const Index = () => {
       Notification.requestPermission();
     }
   }, []);
+
+  // Listen for sidebar touch-add events (mobile)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const type = (e as CustomEvent).detail?.type as ElementType;
+      if (type) {
+        const cam = board.currentBoard.camera;
+        const z = board.currentBoard.zoom;
+        const x = (window.innerWidth / 2 - cam.x) / z;
+        const y = (window.innerHeight / 2 - cam.y) / z;
+        board.addElement(type, x, y);
+      }
+    };
+    window.addEventListener('sidebar-touch-add', handler);
+    return () => window.removeEventListener('sidebar-touch-add', handler);
+  }, [board]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -105,13 +124,13 @@ const Index = () => {
   };
 
   // Show login if not authenticated
-  if (!user) return <Login onLogin={handleLogin} />;
+  if (!user) return <Login onLogin={handleLogin} t={t} />;
 
   // Full-page calendar
-  if (showCalendar) return <CalendarPage onBack={() => setShowCalendar(false)} />;
+  if (showCalendar) return <CalendarPage onBack={() => setShowCalendar(false)} t={t} isRTL={isRTL} />;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-background">
+    <div className={`h-screen flex flex-col overflow-hidden bg-background ${isRTL ? 'direction-rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
       <TopBar
         boards={board.boards}
         currentBoardId={board.currentBoardId}
@@ -125,10 +144,12 @@ const Index = () => {
         onLogout={handleLogout}
         onHome={handleHome}
         onCalendar={() => setShowCalendar(true)}
+        isRTL={isRTL}
+        t={t}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={user} />
+        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={user} isRTL={isRTL} t={t} />
         <Canvas
           board={board.currentBoard}
           selectedElementId={board.selectedElementId}
@@ -142,6 +163,8 @@ const Index = () => {
           onSetZoom={board.setZoom}
           onInteraction={showMiniMapTemporarily}
           snapToGrid={settings.snapToGrid}
+          isRTL={isRTL}
+          t={t}
         />
       </div>
 
@@ -151,6 +174,8 @@ const Index = () => {
         onClose={() => setShowPomodoro(false)}
         workMinutes={settings.pomodoroWork}
         breakMinutes={settings.pomodoroBreak}
+        isRTL={isRTL}
+        t={t}
       />
       <MiniMap
         elements={board.currentBoard.elements}
@@ -163,12 +188,13 @@ const Index = () => {
 
       {/* Modals */}
       {showWaterReminder && (
-        <WaterReminder onDone={handleWaterDone} onRemindLater={handleWaterRemindLater} />
+        <WaterReminder onDone={handleWaterDone} onRemindLater={handleWaterRemindLater} t={t} />
       )}
       <NewBoardDialog
         open={showNewBoard}
         onClose={() => setShowNewBoard(false)}
         onCreateBoard={board.addBoard}
+        t={t}
       />
       <SettingsDialog
         open={showSettings}
@@ -176,6 +202,9 @@ const Index = () => {
         settings={settings}
         onUpdate={updateSettings}
         onClearBoard={handleClearBoard}
+        lang={lang}
+        onSetLang={setLang}
+        t={t}
       />
     </div>
   );

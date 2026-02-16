@@ -15,13 +15,15 @@ interface CanvasProps {
   onSetZoom: (zoom: number) => void;
   onInteraction?: () => void;
   snapToGrid?: boolean;
+  isRTL?: boolean;
+  t?: (key: string) => string;
 }
 
 const Canvas = ({
   board, selectedElementId, onAddElement, onUpdateElement,
   onDeleteElement, onSelectElement, onBringToFront,
   onDuplicateElement, onSetCamera, onSetZoom, onInteraction,
-  snapToGrid = true,
+  snapToGrid = true, isRTL = false, t,
 }: CanvasProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const isPanning = useRef(false);
@@ -42,7 +44,7 @@ const Canvas = ({
 
   const snap = (val: number) => snapToGrid ? Math.round(val / 20) * 20 : val;
 
-  // Wheel zoom - blocked when locked
+  // Wheel zoom
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
@@ -66,47 +68,71 @@ const Canvas = ({
     return () => el.removeEventListener('wheel', handler);
   }, [onSetZoom, onSetCamera, onInteraction]);
 
-  // Document-level mousemove/mouseup
+  // Shared move/up logic (mouse + touch)
+  const handlePointerMove = useCallback((clientX: number, clientY: number) => {
+    if (isPanning.current) {
+      const dx = clientX - panStart.current.x;
+      const dy = clientY - panStart.current.y;
+      onSetCamera({ x: panStart.current.camX + dx, y: panStart.current.camY + dy });
+    }
+    if (isDraggingElement.current) {
+      const z = zoomRef.current;
+      const dx = (clientX - dragStart.current.x) / z;
+      const dy = (clientY - dragStart.current.y) / z;
+      const newX = snap(dragStart.current.elX + dx);
+      const newY = snap(dragStart.current.elY + dy);
+      onUpdateElement(dragStart.current.elementId, { x: newX, y: newY });
+    }
+    if (isResizing.current) {
+      const z = zoomRef.current;
+      const dx = (clientX - resizeStart.current.x) / z;
+      const dy = (clientY - resizeStart.current.y) / z;
+      const newW = Math.max(60, snap(resizeStart.current.elW + dx));
+      const newH = Math.max(20, snap(resizeStart.current.elH + dy));
+      onUpdateElement(resizeStart.current.elementId, { width: newW, height: newH });
+    }
+  }, [onSetCamera, onUpdateElement, snapToGrid]);
+
+  const handlePointerUp = useCallback((clientX: number, clientY: number) => {
+    if (isPanning.current) {
+      const dx = clientX - mouseDownPos.current.x;
+      const dy = clientY - mouseDownPos.current.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 5) onSelectElement(null);
+    }
+    isPanning.current = false;
+    isDraggingElement.current = false;
+    isResizing.current = false;
+    setCursorClass('cursor-grab');
+  }, [onSelectElement]);
+
+  // Mouse events on document
   useEffect(() => {
-    const handleMove = (e: MouseEvent) => {
-      if (isPanning.current) {
-        const dx = e.clientX - panStart.current.x;
-        const dy = e.clientY - panStart.current.y;
-        onSetCamera({ x: panStart.current.camX + dx, y: panStart.current.camY + dy });
-      }
-      if (isDraggingElement.current) {
-        const z = zoomRef.current;
-        const dx = (e.clientX - dragStart.current.x) / z;
-        const dy = (e.clientY - dragStart.current.y) / z;
-        const newX = snap(dragStart.current.elX + dx);
-        const newY = snap(dragStart.current.elY + dy);
-        onUpdateElement(dragStart.current.elementId, { x: newX, y: newY });
-      }
-      if (isResizing.current) {
-        const z = zoomRef.current;
-        const dx = (e.clientX - resizeStart.current.x) / z;
-        const dy = (e.clientY - resizeStart.current.y) / z;
-        const newW = Math.max(60, snap(resizeStart.current.elW + dx));
-        const newH = Math.max(20, snap(resizeStart.current.elH + dy));
-        onUpdateElement(resizeStart.current.elementId, { width: newW, height: newH });
-      }
-    };
-    const handleUp = (e: MouseEvent) => {
-      if (isPanning.current) {
-        const dx = e.clientX - mouseDownPos.current.x;
-        const dy = e.clientY - mouseDownPos.current.y;
-        if (Math.sqrt(dx * dx + dy * dy) < 5) onSelectElement(null);
-      }
-      isPanning.current = false;
-      isDraggingElement.current = false;
-      isResizing.current = false;
-      setCursorClass('cursor-grab');
-    };
+    const handleMove = (e: MouseEvent) => handlePointerMove(e.clientX, e.clientY);
+    const handleUp = (e: MouseEvent) => handlePointerUp(e.clientX, e.clientY);
     document.addEventListener('mousemove', handleMove);
     document.addEventListener('mouseup', handleUp);
     return () => { document.removeEventListener('mousemove', handleMove); document.removeEventListener('mouseup', handleUp); };
-  }, [onSetCamera, onUpdateElement, onSelectElement, snapToGrid]);
+  }, [handlePointerMove, handlePointerUp]);
 
+  // Touch events on document
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isPanning.current || isDraggingElement.current || isResizing.current) {
+        e.preventDefault();
+      }
+      const touch = e.touches[0];
+      if (touch) handlePointerMove(touch.clientX, touch.clientY);
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touch = e.changedTouches[0];
+      if (touch) handlePointerUp(touch.clientX, touch.clientY);
+    };
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    return () => { document.removeEventListener('touchmove', handleTouchMove); document.removeEventListener('touchend', handleTouchEnd); };
+  }, [handlePointerMove, handlePointerUp]);
+
+  // Canvas pan start (mouse)
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     if (board.zoomLocked) return;
@@ -117,6 +143,19 @@ const Canvas = ({
     onInteraction?.();
   };
 
+  // Canvas pan start (touch)
+  const handleCanvasTouchStart = (e: React.TouchEvent) => {
+    if (board.zoomLocked) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    isPanning.current = true;
+    panStart.current = { x: touch.clientX, y: touch.clientY, camX: board.camera.x, camY: board.camera.y };
+    mouseDownPos.current = { x: touch.clientX, y: touch.clientY };
+    setCursorClass('cursor-grabbing');
+    onInteraction?.();
+  };
+
+  // Element drag start (mouse)
   const handleElementMouseDown = useCallback((id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const el = board.elements.find(el => el.id === id);
@@ -129,6 +168,21 @@ const Canvas = ({
     setCursorClass('cursor-grabbing');
   }, [board.elements, onBringToFront, onSelectElement]);
 
+  // Element drag start (touch)
+  const handleElementTouchStart = useCallback((id: string, e: React.TouchEvent) => {
+    e.stopPropagation();
+    const el = board.elements.find(el => el.id === id);
+    if (!el) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    isDraggingElement.current = true;
+    dragStart.current = { x: touch.clientX, y: touch.clientY, elX: el.x, elY: el.y, elementId: id };
+    mouseDownPos.current = { x: touch.clientX, y: touch.clientY };
+    onBringToFront(id);
+    onSelectElement(id);
+  }, [board.elements, onBringToFront, onSelectElement]);
+
+  // Resize start (mouse)
   const handleResizeMouseDown = useCallback((id: string, corner: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const el = board.elements.find(el => el.id === id);
@@ -138,6 +192,18 @@ const Canvas = ({
     setCursorClass('cursor-nwse-resize');
   }, [board.elements]);
 
+  // Resize start (touch)
+  const handleResizeTouchStart = useCallback((id: string, corner: string, e: React.TouchEvent) => {
+    e.stopPropagation();
+    const el = board.elements.find(el => el.id === id);
+    if (!el) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    isResizing.current = true;
+    resizeStart.current = { x: touch.clientX, y: touch.clientY, elW: el.width, elH: el.height, elementId: id, corner };
+  }, [board.elements]);
+
+  // Drop handler
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const type = e.dataTransfer.getData('element-type') as ElementType;
@@ -159,8 +225,9 @@ const Canvas = ({
     <div
       ref={canvasRef}
       className={`flex-1 relative overflow-hidden ${cursorClass}`}
-      style={{ backgroundColor: board.bgColor, ...gridStyle }}
+      style={{ backgroundColor: board.bgColor, ...gridStyle, touchAction: 'none' }}
       onMouseDown={handleCanvasMouseDown}
+      onTouchStart={handleCanvasTouchStart}
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
@@ -179,10 +246,14 @@ const Canvas = ({
             element={el}
             selected={el.id === selectedElementId}
             onMouseDown={(e) => handleElementMouseDown(el.id, e)}
+            onTouchStart={(e) => handleElementTouchStart(el.id, e)}
             onUpdate={(updates) => onUpdateElement(el.id, updates)}
             onDelete={() => onDeleteElement(el.id)}
             onDuplicate={() => onDuplicateElement(el.id)}
             onResizeMouseDown={(corner, e) => handleResizeMouseDown(el.id, corner, e)}
+            onResizeTouchStart={(corner, e) => handleResizeTouchStart(el.id, corner, e)}
+            isRTL={isRTL}
+            t={t}
           />
         ))}
       </div>
