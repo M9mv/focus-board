@@ -13,6 +13,7 @@ import WaterWidget from '@/components/dashboard/WaterWidget';
 import BatteryIcon from '@/components/dashboard/BatteryIcon';
 import NewBoardDialog from '@/components/dashboard/NewBoardDialog';
 import SettingsDialog from '@/components/dashboard/SettingsDialog';
+import ExportBoardDialog from '@/components/dashboard/ExportBoardDialog';
 import CalendarPage from '@/pages/CalendarPage';
 import Login from '@/pages/Login';
 
@@ -24,6 +25,7 @@ const Index = () => {
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showExport, setShowExport] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<string | null>(() => {
@@ -144,6 +146,7 @@ const Index = () => {
         onLogout={handleLogout}
         onHome={handleHome}
         onCalendar={() => setShowCalendar(true)}
+        onExport={() => setShowExport(true)}
         isRTL={isRTL}
         t={t}
       />
@@ -204,6 +207,11 @@ const Index = () => {
         onClearBoard={handleClearBoard}
         lang={lang}
         onSetLang={setLang}
+        t={t}
+      />
+      <ExportBoardDialog
+        open={showExport}
+        onClose={() => setShowExport(false)}
         t={t}
       />
     </div>

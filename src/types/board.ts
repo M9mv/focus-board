@@ -76,6 +76,7 @@ export interface AppSettings {
   pomodoroBreak: number;  // minutes
   waterReminder: boolean;
   pomodoroNotifications: boolean;
+  customPrimaryColor?: string; // HSL string for custom theme
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -86,6 +87,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pomodoroBreak: 5,
   waterReminder: true,
   pomodoroNotifications: true,
+  customPrimaryColor: '211 100% 50%',
 };
 
 // Default sizes for each element type

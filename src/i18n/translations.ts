@@ -79,6 +79,17 @@ export const translations = {
     cancel: 'Cancel',
     // Timer
     timerDragHint: 'Drag to move',
+    // Export
+    exportBoard: 'Export Board',
+    exportAsPNG: 'Export as PNG',
+    exportAsPDF: 'Export as PDF',
+    highQualityImage: 'High quality image',
+    documentFormat: 'Document format',
+    exporting: 'Exporting',
+    export: 'Export',
+    // Theme
+    customColor: 'Custom Color',
+    primaryColor: 'Primary Color',
     // Login
     welcome: 'Welcome',
     enterName: 'Enter your name',
@@ -152,6 +163,15 @@ export const translations = {
     create: 'إنشاء',
     cancel: 'إلغاء',
     timerDragHint: 'اسحب للتحريك',
+    exportBoard: 'تصدير اللوحة',
+    exportAsPNG: 'تصدير كصورة PNG',
+    exportAsPDF: 'تصدير كملف PDF',
+    highQualityImage: 'صورة عالية الجودة',
+    documentFormat: 'صيغة مستند',
+    exporting: 'جاري التصدير',
+    export: 'تصدير',
+    customColor: 'لون مخصص',
+    primaryColor: 'اللون الأساسي',
     welcome: 'مرحباً',
     enterName: 'أدخل اسمك',
     startStudying: 'ابدأ الدراسة',

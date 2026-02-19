@@ -57,8 +57,8 @@ const Sidebar = ({ onOpenSettings, userName, isRTL, t }: SidebarProps) => {
             key={type}
             draggable
             onDragStart={(e) => handleDragStart(e, type)}
-            onTouchEnd={() => handleTouchEnd(type)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-secondary/50 hover:bg-secondary cursor-grab active:cursor-grabbing transition-all hover:ios-shadow-sm active:scale-[0.97] select-none max-md:px-2 max-md:py-2 max-md:justify-center"
+            onTouchEnd={(e) => { e.preventDefault(); handleTouchEnd(type); }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-secondary/50 hover:bg-secondary cursor-grab active:cursor-grabbing transition-all hover:ios-shadow-sm active:scale-[0.97] active:bg-primary/10 select-none max-md:px-2 max-md:py-2 max-md:justify-center touch-manipulation"
           >
             <Icon className={`w-4 h-4 ${color} shrink-0`} />
             <span className="text-sm font-medium text-foreground max-md:hidden">{t?.(labelKey) || ELEMENT_LABELS[type]}</span>
