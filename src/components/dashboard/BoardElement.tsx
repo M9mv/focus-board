@@ -284,8 +284,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
       case 'icon':
         return (
           <div
-            className="w-full h-full flex items-center justify-center text-4xl select-none cursor-pointer relative"
-            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+            className="w-full h-full flex items-center justify-center text-4xl select-none relative"
           >
             {element.emoji ? (
               <span className="transition-transform hover:scale-110">{element.emoji}</span>
@@ -295,15 +294,16 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
               </div>
             )}
 
-            {/* Emoji picker dropdown */}
+            {/* Emoji picker dropdown - shown via toolbar button */}
             {showEmojiPicker && (
               <div
-                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in"
+                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[200] glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in"
                 onMouseDown={stopProp}
                 onTouchStart={stopProp}
+                onClick={stopProp}
               >
                 {EMOJI_GRID.map(em => (
-                  <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
+                  <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} onMouseDown={stopProp} onTouchStart={stopProp} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
                     {em}
                   </button>
                 ))}
@@ -313,9 +313,9 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
         );
       case 'mindmap':
         return (
-          <div className="w-full h-full relative overflow-hidden" onMouseDown={stopProp} onTouchStart={stopProp}>
-            {/* Title bar */}
-            <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between z-10 bg-card/60 backdrop-blur-sm border-b border-border/30">
+          <div className="w-full h-full relative overflow-hidden">
+            {/* Title bar - draggable area for the whole element */}
+            <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between z-10 bg-card/60 backdrop-blur-sm border-b border-border/30 cursor-move">
               {renderTitle()}
               <div className="flex gap-1">
                 <button onClick={addMindMapNode} className="p-1 rounded-lg hover:bg-secondary transition-colors" title={t?.('newNode') || 'Add node'}>
@@ -438,9 +438,14 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
 
       {/* Selection toolbar */}
       {selected && (
-        <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 glass rounded-lg px-1.5 py-1 ios-shadow-sm animate-scale-in">
+        <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 glass rounded-lg px-1.5 py-1 ios-shadow-sm animate-scale-in z-[100]">
           {renderDividerToolbar()}
           {renderImageToolbar()}
+          {element.type === 'icon' && (
+            <button onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }} onMouseDown={stopProp} onTouchStart={stopProp} className="p-1 rounded hover:bg-secondary transition-colors" title={t?.('changeEmoji') || 'Change Emoji'}>
+              <Smile className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+          )}
           <button onClick={(e) => { e.stopPropagation(); onDuplicate(); }} onMouseDown={stopProp} className="p-1 rounded hover:bg-secondary transition-colors" title={t?.('duplicate') || 'Duplicate'}>
             <Copy className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
