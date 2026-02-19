@@ -224,6 +224,7 @@ const Canvas = ({
   return (
     <div
       ref={canvasRef}
+      data-board-canvas
       className={`flex-1 relative overflow-hidden ${cursorClass}`}
       style={{ backgroundColor: board.bgColor, ...gridStyle, touchAction: 'none' }}
       onMouseDown={handleCanvasMouseDown}

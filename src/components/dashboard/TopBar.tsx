@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -14,6 +14,7 @@ interface TopBarProps {
   onLogout: () => void;
   onHome: () => void;
   onCalendar: () => void;
+  onExport?: () => void;
   isRTL?: boolean;
   t?: (key: string) => string;
 }
@@ -21,7 +22,7 @@ interface TopBarProps {
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
-  onLogout, onHome, onCalendar, isRTL, t,
+  onLogout, onHome, onCalendar, onExport, isRTL, t,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
@@ -66,6 +67,13 @@ const TopBar = ({
         <span className="text-xs text-muted-foreground mr-2 tabular-nums max-md:hidden">
           {Math.round(zoom * 100)}%
         </span>
+        <button
+          onClick={onExport}
+          className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
+          title={t?.('export') || 'Export'}
+        >
+          <Download className="w-4 h-4" />
+        </button>
         <button
           onClick={onTogglePomodoro}
           className={`p-2 rounded-lg transition-colors active:scale-95 ${showPomodoro ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}

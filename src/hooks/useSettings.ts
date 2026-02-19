@@ -22,6 +22,11 @@ export const useSettings = () => {
     } else {
       document.documentElement.classList.remove('dark');
     }
+    // Apply custom primary color
+    if (settings.customPrimaryColor) {
+      document.documentElement.style.setProperty('--primary', settings.customPrimaryColor);
+      document.documentElement.style.setProperty('--ring', settings.customPrimaryColor);
+    }
   }, [settings]);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {

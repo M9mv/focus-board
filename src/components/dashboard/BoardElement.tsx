@@ -284,11 +284,9 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
       case 'icon':
         return (
           <div
-            className="w-full h-full flex items-center justify-center text-4xl select-none cursor-pointer relative group"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => { setHovered(false); setShowEmojiPicker(false); }}
+            className="w-full h-full flex items-center justify-center text-4xl select-none cursor-pointer relative"
+            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
           >
-            {/* Show emoji or placeholder */}
             {element.emoji ? (
               <span className="transition-transform hover:scale-110">{element.emoji}</span>
             ) : (
@@ -297,25 +295,12 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
               </div>
             )}
 
-            {/* Hover button to open picker */}
-            {(hovered || showEmojiPicker) && (
-              <button
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs ios-shadow-sm animate-scale-in z-50"
-                onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
-                onMouseDown={stopProp}
-                onTouchStart={stopProp}
-              >
-                <Smile className="w-3 h-3" />
-              </button>
-            )}
-
             {/* Emoji picker dropdown */}
             {showEmojiPicker && (
               <div
                 className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50 glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in"
                 onMouseDown={stopProp}
                 onTouchStart={stopProp}
-                onMouseEnter={() => setHovered(true)}
               >
                 {EMOJI_GRID.map(em => (
                   <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
