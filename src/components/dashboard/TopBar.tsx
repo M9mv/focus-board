@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -15,6 +15,8 @@ interface TopBarProps {
   onHome: () => void;
   onCalendar: () => void;
   onExport?: () => void;
+  onToggleAI?: () => void;
+  showAI?: boolean;
   isRTL?: boolean;
   t?: (key: string) => string;
 }
@@ -22,7 +24,7 @@ interface TopBarProps {
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
-  onLogout, onHome, onCalendar, onExport, isRTL, t,
+  onLogout, onHome, onCalendar, onExport, onToggleAI, showAI, isRTL, t,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
@@ -87,6 +89,13 @@ const TopBar = ({
           title={zoomLocked ? (t?.('unlockBoard') || 'Unlock Board') : (t?.('lockBoard') || 'Lock Board')}
         >
           {zoomLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+        </button>
+        <button
+          onClick={onToggleAI}
+          className={`p-2 rounded-lg transition-colors active:scale-95 ${showAI ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
+          title={t?.('aiAssistant') || 'AI Assistant'}
+        >
+          <Sparkles className="w-4 h-4" />
         </button>
         <button onClick={onLogout} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95" title={t?.('logout') || 'Logout'}>
           <LogOut className="w-4 h-4" />

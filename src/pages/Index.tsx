@@ -14,6 +14,7 @@ import BatteryIcon from '@/components/dashboard/BatteryIcon';
 import NewBoardDialog from '@/components/dashboard/NewBoardDialog';
 import SettingsDialog from '@/components/dashboard/SettingsDialog';
 import ExportBoardDialog from '@/components/dashboard/ExportBoardDialog';
+import AISidebar from '@/components/dashboard/AISidebar';
 import CalendarPage from '@/pages/CalendarPage';
 import Login from '@/pages/Login';
 
@@ -26,6 +27,7 @@ const Index = () => {
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExport, setShowExport] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
   // Auth state
   const [user, setUser] = useState<string | null>(() => {
@@ -147,6 +149,8 @@ const Index = () => {
         onHome={handleHome}
         onCalendar={() => setShowCalendar(true)}
         onExport={() => setShowExport(true)}
+        onToggleAI={() => setShowAI(!showAI)}
+        showAI={showAI}
         isRTL={isRTL}
         t={t}
       />
@@ -212,6 +216,13 @@ const Index = () => {
       <ExportBoardDialog
         open={showExport}
         onClose={() => setShowExport(false)}
+        t={t}
+      />
+      <AISidebar
+        open={showAI}
+        onClose={() => setShowAI(false)}
+        elements={board.currentBoard.elements}
+        isRTL={isRTL}
         t={t}
       />
     </div>

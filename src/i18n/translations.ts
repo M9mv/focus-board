@@ -94,6 +94,16 @@ export const translations = {
     welcome: 'Welcome',
     enterName: 'Enter your name',
     startStudying: 'Start Studying',
+    // AI
+    aiAssistant: 'AI Assistant',
+    aiWelcome: 'Your Smart Study Buddy',
+    aiWelcomeDesc: 'Ask me anything! I can analyze your board, suggest tasks, and help you study.',
+    aiPlaceholder: 'Ask me anything...',
+    clearChat: 'Clear Chat',
+    aiSuggest1: 'Organize my tasks by priority',
+    aiSuggest2: 'Suggest a study plan for today',
+    aiSuggest3: 'Summarize my notes',
+    changeEmoji: 'Change Emoji',
   },
   ar: {
     elements: 'العناصر',
@@ -175,6 +185,15 @@ export const translations = {
     welcome: 'مرحباً',
     enterName: 'أدخل اسمك',
     startStudying: 'ابدأ الدراسة',
+    aiAssistant: 'المساعد الذكي',
+    aiWelcome: 'مساعدك الذكي للدراسة',
+    aiWelcomeDesc: 'اسألني أي شيء! يمكنني تحليل لوحتك واقتراح مهام ومساعدتك في الدراسة.',
+    aiPlaceholder: 'اسألني أي شيء...',
+    clearChat: 'مسح المحادثة',
+    aiSuggest1: 'رتب مهامي حسب الأولوية',
+    aiSuggest2: 'اقترح خطة دراسية لليوم',
+    aiSuggest3: 'لخص ملاحظاتي',
+    changeEmoji: 'تغيير الإيموجي',
   },
 } as const;
 
