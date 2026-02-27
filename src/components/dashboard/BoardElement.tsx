@@ -5,12 +5,15 @@ import {
 import { BoardElement as BoardElementType, TodoItem, MindMapNode, MindMapConnection } from '@/types/board';
 
 // Common emoji categories for quick picking
-const EMOJI_GRID = [
-  '📚','📖','✏️','📝','💡','🎯','⭐','🔥',
-  '❤️','💪','🧠','🎓','📅','⏰','🔔','✅',
-  '❌','⚡','🌟','🏆','🎉','💻','🎨','🎵',
-  '🌈','☀️','🌙','🍀','🦋','🐱','🐶','🌸',
-];
+const EMOJI_CATEGORIES: Record<string, string[]> = {
+  '📚': ['📚','📖','✏️','📝','💡','🎯','⭐','📐','📏','🖊️','📌','📎','🗂️','📓','🗒️','🔖'],
+  '😀': ['😀','😁','😂','🤣','😊','😍','🥰','😎','🤔','😴','🥳','😇','🤗','😤','😱','🤯'],
+  '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💖','💝','💔','❣️','💕','💞','💓','💗'],
+  '🐱': ['🐱','🐶','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦋'],
+  '🍎': ['🍎','🍊','🍋','🍇','🍉','🍓','🫐','🥑','🍕','🍔','🍩','🍪','☕','🧁','🍰','🧃'],
+  '⚡': ['⚡','🔥','💪','🧠','🏆','🎉','💻','🎨','🎵','🌈','☀️','🌙','🍀','🌸','✅','❌'],
+  '🚀': ['🚀','✈️','🚗','🏠','🏫','🏥','⚽','🏀','🎮','🎲','🎭','🎬','📷','🔔','⏰','📅'],
+};
 
 interface BoardElementProps {
   element: BoardElementType;
@@ -29,6 +32,7 @@ interface BoardElementProps {
 const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpdate, onDelete, onDuplicate, onResizeMouseDown, onResizeTouchStart, isRTL, t }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiCategory, setEmojiCategory] = useState('📚');
   const [hovered, setHovered] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -284,7 +288,8 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
       case 'icon':
         return (
           <div
-            className="w-full h-full flex items-center justify-center text-4xl select-none relative"
+            className="w-full h-full flex items-center justify-center text-4xl select-none relative cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
           >
             {element.emoji ? (
               <span className="transition-transform hover:scale-110">{element.emoji}</span>
@@ -294,19 +299,32 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
               </div>
             )}
 
-            {/* Emoji picker dropdown - shown via toolbar button */}
+            {/* Rich emoji picker */}
             {showEmojiPicker && (
               <div
-                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[200] glass rounded-xl ios-shadow-lg p-2 grid grid-cols-8 gap-1 w-72 animate-scale-in"
+                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[200] bg-card border border-border rounded-2xl ios-shadow-lg p-3 w-80 animate-scale-in"
                 onMouseDown={stopProp}
                 onTouchStart={stopProp}
                 onClick={stopProp}
               >
-                {EMOJI_GRID.map(em => (
-                  <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} onMouseDown={stopProp} onTouchStart={stopProp} className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
-                    {em}
-                  </button>
-                ))}
+                {/* Category tabs */}
+                <div className="flex gap-1 mb-2 pb-2 border-b border-border overflow-x-auto">
+                  {Object.keys(EMOJI_CATEGORIES).map(cat => (
+                    <button key={cat} onClick={(e) => { e.stopPropagation(); setEmojiCategory(cat); }}
+                      className={`w-8 h-8 flex items-center justify-center text-lg rounded-lg shrink-0 transition-colors ${emojiCategory === cat ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-secondary'}`}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+                {/* Emoji grid */}
+                <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto">
+                  {EMOJI_CATEGORIES[emojiCategory].map(em => (
+                    <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} onMouseDown={stopProp} onTouchStart={stopProp}
+                      className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
+                      {em}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
