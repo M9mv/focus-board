@@ -51,7 +51,7 @@ const Canvas = ({
   useEffect(() => { zoomLockedRef.current = board.zoomLocked; }, [board.zoomLocked]);
 
   const snap = (val: number) => snapToGrid ? Math.round(val / 20) * 20 : val;
-  const getTouchDistance = (a: Touch, b: Touch) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+  const getTouchDistance = (a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 
   // Wheel zoom
   useEffect(() => {
