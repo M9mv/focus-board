@@ -126,20 +126,47 @@ const Canvas = ({
   // Touch events on document
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchStart.current && !zoomLockedRef.current) {
+        e.preventDefault();
+        const [a, b] = [e.touches[0], e.touches[1]];
+        const currentDistance = getTouchDistance(a, b);
+        const zoomRatio = currentDistance / pinchStart.current.distance;
+        const nextZoom = Math.min(3, Math.max(0.35, pinchStart.current.zoom * zoomRatio));
+
+        const centerX = (a.clientX + b.clientX) / 2;
+        const centerY = (a.clientY + b.clientY) / 2;
+        const worldX = (pinchStart.current.centerX - pinchStart.current.camX) / pinchStart.current.zoom;
+        const worldY = (pinchStart.current.centerY - pinchStart.current.camY) / pinchStart.current.zoom;
+
+        onSetZoom(nextZoom);
+        onSetCamera({
+          x: centerX - worldX * nextZoom,
+          y: centerY - worldY * nextZoom,
+        });
+        onInteraction?.();
+        return;
+      }
+
       if (isPanning.current || isDraggingElement.current || isResizing.current) {
         e.preventDefault();
       }
       const touch = e.touches[0];
       if (touch) handlePointerMove(touch.clientX, touch.clientY);
     };
+
     const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinchStart.current = null;
       const touch = e.changedTouches[0];
-      if (touch) handlePointerUp(touch.clientX, touch.clientY);
+      if (touch && !pinchStart.current) handlePointerUp(touch.clientX, touch.clientY);
     };
+
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-    return () => { document.removeEventListener('touchmove', handleTouchMove); document.removeEventListener('touchend', handleTouchEnd); };
-  }, [handlePointerMove, handlePointerUp]);
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handlePointerMove, handlePointerUp, onSetZoom, onSetCamera, onInteraction]);
 
   // Canvas pan start (mouse)
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
