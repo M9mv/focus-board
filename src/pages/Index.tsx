@@ -295,6 +295,10 @@ const Index = () => {
         open={showAI}
         onClose={() => setShowAI(false)}
         elements={board.currentBoard.elements}
+        onAddElement={handleAIAddElement}
+        onUpdateElement={handleAIUpdateElement}
+        onDeleteElement={board.deleteElement}
+        onArrangeBoard={handleAIArrangeBoard}
         isRTL={isRTL}
         t={t}
       />
