@@ -35,7 +35,6 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const [emojiCategory, setEmojiCategory] = useState('📚');
   const [customEmoji, setCustomEmoji] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
-  const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Mind map state
