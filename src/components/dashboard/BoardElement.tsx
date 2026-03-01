@@ -77,6 +77,17 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
 
   const selectEmoji = (emoji: string) => {
     onUpdate({ emoji });
+    setCustomEmoji('');
+    setShowEmojiPicker(false);
+  };
+
+  const selectCustomEmoji = () => {
+    const value = customEmoji.trim();
+    if (!value) return;
+    const firstEmoji = Array.from(value)[0];
+    if (!firstEmoji) return;
+    onUpdate({ emoji: firstEmoji });
+    setCustomEmoji('');
     setShowEmojiPicker(false);
   };
 
