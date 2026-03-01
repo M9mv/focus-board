@@ -28,6 +28,7 @@ const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onD
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const _ = (key: string) => t?.(key) || key;
+  const ACTION_REGEX = /\[ACTION:([A-Z_]+)\]([\s\S]*?)\[\/ACTION\]/g;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
