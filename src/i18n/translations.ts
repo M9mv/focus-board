@@ -104,6 +104,8 @@ export const translations = {
     aiSuggest2: 'Suggest a study plan for today',
     aiSuggest3: 'Summarize my notes',
     changeEmoji: 'Change Emoji',
+    pasteAnyEmoji: 'Paste any emoji',
+    apply: 'Apply',
   },
   ar: {
     elements: 'العناصر',
