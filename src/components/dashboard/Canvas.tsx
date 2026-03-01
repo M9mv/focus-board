@@ -33,6 +33,14 @@ const Canvas = ({
   const dragStart = useRef({ x: 0, y: 0, elX: 0, elY: 0, elementId: '' });
   const resizeStart = useRef({ x: 0, y: 0, elW: 0, elH: 0, elementId: '', corner: '' });
   const mouseDownPos = useRef({ x: 0, y: 0 });
+  const pinchStart = useRef<{
+    distance: number;
+    zoom: number;
+    centerX: number;
+    centerY: number;
+    camX: number;
+    camY: number;
+  } | null>(null);
   const [cursorClass, setCursorClass] = useState('cursor-grab');
 
   const cameraRef = useRef(board.camera);
