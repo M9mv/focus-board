@@ -301,7 +301,10 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
         return (
           <div
             className="w-full h-full flex items-center justify-center text-4xl select-none relative cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); setShowEmojiPicker(!showEmojiPicker); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (selected) setShowEmojiPicker(!showEmojiPicker);
+            }}
           >
             {element.emoji ? (
               <span className="transition-transform hover:scale-110">{element.emoji}</span>
@@ -328,6 +331,27 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
                     </button>
                   ))}
                 </div>
+
+                {/* Custom emoji */}
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    value={customEmoji}
+                    onChange={(e) => setCustomEmoji(e.target.value)}
+                    onMouseDown={stopProp}
+                    onTouchStart={stopProp}
+                    placeholder={t?.('pasteAnyEmoji') || 'Paste any emoji'}
+                    className="flex-1 h-8 px-2 rounded-lg bg-secondary text-foreground text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); selectCustomEmoji(); }}
+                    onMouseDown={stopProp}
+                    onTouchStart={stopProp}
+                    className="h-8 px-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
+                  >
+                    {t?.('apply') || 'Apply'}
+                  </button>
+                </div>
+
                 {/* Emoji grid */}
                 <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto">
                   {EMOJI_CATEGORIES[emojiCategory].map(em => (
