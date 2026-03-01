@@ -61,6 +61,111 @@ const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onD
     return parts.join('\n');
   }, [elements]);
 
+  const stripActionBlocks = (text: string) => text.replace(ACTION_REGEX, '').trim();
+
+  const safelyParseJson = (value: string) => {
+    const cleaned = value
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      const normalized = cleaned
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, '');
+      return JSON.parse(normalized);
+    }
+  };
+
+  const executeAction = useCallback((action: string, payloadText: string) => {
+    let payload: any = {};
+    try {
+      payload = safelyParseJson(payloadText);
+    } catch {
+      return;
+    }
+
+    if (action === 'CREATE_NOTE') {
+      onAddElement?.('note', payload);
+      return;
+    }
+    if (action === 'CREATE_TODO') {
+      onAddElement?.('todo', payload);
+      return;
+    }
+    if (action === 'CREATE_MINDMAP') {
+      onAddElement?.('mindmap', payload);
+      return;
+    }
+    if (action === 'UPDATE_ELEMENT' && payload.id) {
+      onUpdateElement?.(payload.id, payload.updates || payload);
+      return;
+    }
+    if (action === 'DELETE_ELEMENT' && payload.id) {
+      onDeleteElement?.(payload.id);
+      return;
+    }
+    if (action === 'ARRANGE_BOARD') {
+      onArrangeBoard?.();
+    }
+  }, [onAddElement, onUpdateElement, onDeleteElement, onArrangeBoard]);
+
+  const runActionsFromText = useCallback((text: string) => {
+    const matches = Array.from(text.matchAll(ACTION_REGEX));
+    matches.forEach((m) => executeAction(m[1], m[2]));
+    return stripActionBlocks(text);
+  }, [ACTION_REGEX, executeAction]);
+
+  const readSSE = async (response: Response, onToken: (value: string) => void) => {
+    if (!response.body) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    const flushEvent = (eventBlock: string) => {
+      const lines = eventBlock.split('\n');
+      const data = lines
+        .map((line) => line.trimEnd())
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+        .join('');
+
+      if (!data || data === '[DONE]') return false;
+
+      try {
+        const parsed = JSON.parse(data);
+        const token = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (token) onToken(token);
+      } catch {
+        // Ignore invalid partial event
+      }
+
+      return true;
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+      let separatorIndex = buffer.indexOf('\n\n');
+      while (separatorIndex !== -1) {
+        const eventBlock = buffer.slice(0, separatorIndex).replace(/\r/g, '');
+        buffer = buffer.slice(separatorIndex + 2);
+        const shouldContinue = flushEvent(eventBlock);
+        if (!shouldContinue && eventBlock.includes('[DONE]')) return;
+        separatorIndex = buffer.indexOf('\n\n');
+      }
+
+      if (done) {
+        if (buffer.trim()) flushEvent(buffer.replace(/\r/g, ''));
+        break;
+      }
+    }
+  };
+
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
     const userMsg: Message = { id: crypto.randomUUID(), role: 'user', content: input.trim() };
