@@ -14,15 +14,24 @@ const ExportBoardDialog = ({ open, onClose, t }: ExportBoardDialogProps) => {
   const _ = (key: string) => t?.(key) || key;
 
   const captureCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    // Find the canvas container (the flex-1 relative overflow-hidden div)
     const canvasEl = document.querySelector('[data-board-canvas]') as HTMLElement;
     if (!canvasEl) return null;
-    
+
+    const rect = canvasEl.getBoundingClientRect();
+    const computed = getComputedStyle(canvasEl);
+    const bg = computed.backgroundColor || 'hsl(var(--background))';
+
     try {
       const canvas = await html2canvas(canvasEl, {
-        backgroundColor: null,
+        backgroundColor: bg,
         useCORS: true,
-        scale: 2,
+        scale: Math.min(3, window.devicePixelRatio > 1 ? 2 : 1.5),
+        width: rect.width,
+        height: rect.height,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
         logging: false,
       });
       return canvas;
@@ -51,14 +60,27 @@ const ExportBoardDialog = ({ open, onClose, t }: ExportBoardDialogProps) => {
     try {
       const canvas = await captureCanvas();
       if (!canvas) return;
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height],
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`board-${Date.now()}.pdf`);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const maxW = pageWidth - margin * 2;
+      const maxH = pageHeight - margin * 2;
+      const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
+      const renderW = canvas.width * ratio;
+      const renderH = canvas.height * ratio;
+      const offsetX = (pageWidth - renderW) / 2;
+      const offsetY = (pageHeight - renderH) / 2;
+
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderW, renderH, undefined, 'FAST');
+      pdf.save(`board-view-${Date.now()}.pdf`);
     } finally {
       setExporting(false);
       onClose();

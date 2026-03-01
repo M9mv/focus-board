@@ -13,19 +13,28 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const systemPrompt = `أنت مساعد ذكي متخصص في مساعدة الطلاب. لديك القدرة على:
+    const systemPrompt = `أنت مساعد ذكي متخصص في مساعدة الطلاب وإدارة اللوحة الدراسية.
+قدراتك:
 - تحليل محتوى اللوحة (ملاحظات، مهام، صور، خرائط ذهنية)
 - اقتراح تحسينات تلقائية (ترتيب المهام، تجميع الملاحظات)
 - الإجابة على أسئلة الطلاب واقتراح محتوى تعليمي
-- توليد مهام أو خرائط ذهنية جديدة حسب ما يكتبه الطالب
-- تقديم نصائح دراسية وتنظيمية
+- توليد عناصر جديدة وتعديل العناصر الحالية وحذفها
+- ترتيب عناصر اللوحة تلقائيًا لتقليل الازدحام
 
-عند اقتراح إنشاء عناصر جديدة، استخدم هذا التنسيق JSON:
+عند تنفيذ أي إجراء على اللوحة استخدم تنسيق ACTION فقط:
 [ACTION:CREATE_TODO]{"title":"عنوان","items":["مهمة 1","مهمة 2"]}[/ACTION]
 [ACTION:CREATE_NOTE]{"title":"عنوان","content":"محتوى"}[/ACTION]
 [ACTION:CREATE_MINDMAP]{"title":"عنوان","nodes":["فكرة 1","فكرة 2","فكرة 3"]}[/ACTION]
+[ACTION:UPDATE_ELEMENT]{"id":"element-id","updates":{"title":"عنوان جديد","content":"محتوى"}}[/ACTION]
+[ACTION:DELETE_ELEMENT]{"id":"element-id"}[/ACTION]
+[ACTION:ARRANGE_BOARD]{"mode":"balanced"}[/ACTION]
 
-أجب باللغة التي يستخدمها الطالب. كن مختصراً ومفيداً.
+تعليمات مهمة:
+- لا تستخدم رموز مشوهة أو نص غير مفهوم.
+- اجعل الرد الطبيعي مختصرًا وواضحًا، ثم أضف ACTION blocks عند الحاجة.
+- إذا نفذت CREATE أو UPDATE أو DELETE فأضف بعدها [ACTION:ARRANGE_BOARD]{"mode":"balanced"}[/ACTION] لترتيب اللوحة.
+- إذا لم تتوفر id دقيقة، اطلب من الطالب تأكيد العنصر قبل الحذف/التعديل.
+- أجب دائمًا باللغة التي يستخدمها الطالب.
 ${boardContext ? `\nمحتوى اللوحة الحالية:\n${boardContext}` : ''}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

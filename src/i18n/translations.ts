@@ -104,6 +104,8 @@ export const translations = {
     aiSuggest2: 'Suggest a study plan for today',
     aiSuggest3: 'Summarize my notes',
     changeEmoji: 'Change Emoji',
+    pasteAnyEmoji: 'Paste any emoji',
+    apply: 'Apply',
   },
   ar: {
     elements: 'العناصر',
@@ -194,6 +196,8 @@ export const translations = {
     aiSuggest2: 'اقترح خطة دراسية لليوم',
     aiSuggest3: 'لخص ملاحظاتي',
     changeEmoji: 'تغيير الإيموجي',
+    pasteAnyEmoji: 'الصق أي إيموجي',
+    apply: 'تطبيق',
   },
 } as const;
 

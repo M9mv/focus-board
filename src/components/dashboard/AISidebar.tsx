@@ -12,12 +12,15 @@ interface AISidebarProps {
   open: boolean;
   onClose: () => void;
   elements: BoardElement[];
-  onAddElement?: (type: string, data: any) => void;
+  onAddElement?: (type: 'note' | 'todo' | 'mindmap', data?: any) => void;
+  onUpdateElement?: (id: string, updates: Partial<BoardElement>) => void;
+  onDeleteElement?: (id: string) => void;
+  onArrangeBoard?: () => void;
   isRTL?: boolean;
   t?: (key: string) => string;
 }
 
-const AISidebar = ({ open, onClose, elements, onAddElement, isRTL, t }: AISidebarProps) => {
+const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onDeleteElement, onArrangeBoard, isRTL, t }: AISidebarProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,6 +28,7 @@ const AISidebar = ({ open, onClose, elements, onAddElement, isRTL, t }: AISideba
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const _ = (key: string) => t?.(key) || key;
+  const ACTION_REGEX = /\[ACTION:([A-Z_]+)\]([\s\S]*?)\[\/ACTION\]/g;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -37,20 +41,130 @@ const AISidebar = ({ open, onClose, elements, onAddElement, isRTL, t }: AISideba
   const getBoardContext = useCallback(() => {
     if (!elements.length) return '';
     const parts: string[] = [];
-    elements.forEach(el => {
-      if (el.type === 'note' && el.content) parts.push(`ملاحظة: ${el.title || ''} - ${el.content}`);
-      if ((el.type === 'todo' || el.type === 'checklist') && el.todos?.length) {
-        const items = el.todos.map(t => `${t.completed ? '✅' : '⬜'} ${t.text}`).join(', ');
-        parts.push(`مهام (${el.title || ''}): ${items}`);
+
+    elements.forEach((el, index) => {
+      const base = `id:${el.id} | idx:${index + 1} | type:${el.type} | x:${Math.round(el.x)} | y:${Math.round(el.y)} | w:${Math.round(el.width)} | h:${Math.round(el.height)}`;
+      if (el.type === 'note') parts.push(`${base} | title:${el.title || ''} | content:${el.content || ''}`);
+      if (el.type === 'todo' || el.type === 'checklist') {
+        const items = (el.todos || []).map((todo) => `${todo.completed ? '✅' : '⬜'} ${todo.text}`).join(' | ');
+        parts.push(`${base} | title:${el.title || ''} | todos:${items}`);
       }
-      if (el.type === 'textbox' && el.content) parts.push(`نص: ${el.content}`);
-      if (el.type === 'mindmap' && el.mindmapNodes?.length) {
-        const nodes = el.mindmapNodes.map(n => n.label).join(', ');
-        parts.push(`خريطة ذهنية (${el.title || ''}): ${nodes}`);
+      if (el.type === 'textbox') parts.push(`${base} | title:${el.title || ''} | text:${el.content || ''}`);
+      if (el.type === 'mindmap') {
+        const nodes = (el.mindmapNodes || []).map((n) => `${n.id}:${n.label}(${Math.round(n.x)},${Math.round(n.y)})`).join(' | ');
+        parts.push(`${base} | title:${el.title || ''} | nodes:${nodes}`);
       }
+      if (el.type === 'icon') parts.push(`${base} | emoji:${el.emoji || ''}`);
+      if (el.type === 'image') parts.push(`${base} | image:${el.fileName || 'attached'}`);
     });
+
     return parts.join('\n');
   }, [elements]);
+
+  const stripActionBlocks = (text: string) => text.replace(ACTION_REGEX, '').trim();
+
+  const safelyParseJson = (value: string) => {
+    const cleaned = value
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*/g, '')
+      .trim();
+
+    try {
+      return JSON.parse(cleaned);
+    } catch {
+      const normalized = cleaned
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, '');
+      return JSON.parse(normalized);
+    }
+  };
+
+  const executeAction = useCallback((action: string, payloadText: string) => {
+    let payload: any = {};
+    try {
+      payload = safelyParseJson(payloadText);
+    } catch {
+      return;
+    }
+
+    if (action === 'CREATE_NOTE') {
+      onAddElement?.('note', payload);
+      return;
+    }
+    if (action === 'CREATE_TODO') {
+      onAddElement?.('todo', payload);
+      return;
+    }
+    if (action === 'CREATE_MINDMAP') {
+      onAddElement?.('mindmap', payload);
+      return;
+    }
+    if (action === 'UPDATE_ELEMENT' && payload.id) {
+      onUpdateElement?.(payload.id, payload.updates || payload);
+      return;
+    }
+    if (action === 'DELETE_ELEMENT' && payload.id) {
+      onDeleteElement?.(payload.id);
+      return;
+    }
+    if (action === 'ARRANGE_BOARD') {
+      onArrangeBoard?.();
+    }
+  }, [onAddElement, onUpdateElement, onDeleteElement, onArrangeBoard]);
+
+  const runActionsFromText = useCallback((text: string) => {
+    const matches = Array.from(text.matchAll(ACTION_REGEX));
+    matches.forEach((m) => executeAction(m[1], m[2]));
+    return stripActionBlocks(text);
+  }, [ACTION_REGEX, executeAction]);
+
+  const readSSE = async (response: Response, onToken: (value: string) => void) => {
+    if (!response.body) return;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    const flushEvent = (eventBlock: string) => {
+      const lines = eventBlock.split('\n');
+      const data = lines
+        .map((line) => line.trimEnd())
+        .filter((line) => line.startsWith('data:'))
+        .map((line) => line.slice(5).trim())
+        .join('');
+
+      if (!data || data === '[DONE]') return false;
+
+      try {
+        const parsed = JSON.parse(data);
+        const token = parsed.choices?.[0]?.delta?.content as string | undefined;
+        if (token) onToken(token);
+      } catch {
+        // Ignore invalid partial event
+      }
+
+      return true;
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+
+      let separatorIndex = buffer.indexOf('\n\n');
+      while (separatorIndex !== -1) {
+        const eventBlock = buffer.slice(0, separatorIndex).replace(/\r/g, '');
+        buffer = buffer.slice(separatorIndex + 2);
+        const shouldContinue = flushEvent(eventBlock);
+        if (!shouldContinue && eventBlock.includes('[DONE]')) return;
+        separatorIndex = buffer.indexOf('\n\n');
+      }
+
+      if (done) {
+        if (buffer.trim()) flushEvent(buffer.replace(/\r/g, ''));
+        break;
+      }
+    }
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -80,46 +194,26 @@ const AISidebar = ({ open, onClose, elements, onAddElement, isRTL, t }: AISideba
         throw new Error(errData.error || `Error ${resp.status}`);
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-
       const upsert = (chunk: string) => {
         assistantContent += chunk;
+        const cleanText = stripActionBlocks(assistantContent);
         setMessages(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: cleanText } : m);
           }
-          return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: assistantContent }];
+          return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: cleanText }];
         });
       };
 
-      let streamDone = false;
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
+      await readSSE(resp, upsert);
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') { streamDone = true; break; }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsert(content);
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
+      const finalClean = runActionsFromText(assistantContent);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role !== 'assistant') return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: finalClean }];
+        return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: finalClean } : m);
+      });
     } catch (e: any) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(), role: 'assistant',

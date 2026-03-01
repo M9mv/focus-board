@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBoard } from '@/hooks/useBoard';
 import { useSettings } from '@/hooks/useSettings';
 import { useLanguage } from '@/i18n/useLanguage';
-import { ElementType } from '@/types/board';
+import { ElementType, BoardElement as BoardElementType, MindMapNode } from '@/types/board';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Canvas from '@/components/dashboard/Canvas';
@@ -127,6 +127,79 @@ const Index = () => {
     board.updateCurrentBoard(b => ({ ...b, elements: [] }));
   };
 
+  const handleAIAddElement = useCallback((type: 'note' | 'todo' | 'mindmap', data?: any) => {
+    const cam = board.currentBoard.camera;
+    const z = board.currentBoard.zoom;
+    const baseX = Math.max(40, (window.innerWidth / 2 - cam.x) / z - 140);
+    const baseY = Math.max(40, (window.innerHeight / 2 - cam.y) / z - 120);
+
+    const id = board.addElement(type, baseX, baseY);
+    if (!id || !data) return;
+
+    const updates: Partial<BoardElementType> = {};
+    if (data.title) updates.title = data.title;
+
+    if (type === 'note' && data.content) {
+      updates.content = data.content;
+    }
+
+    if (type === 'todo' && Array.isArray(data.items)) {
+      updates.todos = data.items
+        .filter((item: unknown) => typeof item === 'string' && item.trim())
+        .map((text: string) => ({ id: crypto.randomUUID(), text, completed: false }));
+    }
+
+    if (type === 'mindmap' && Array.isArray(data.nodes)) {
+      const nodes: MindMapNode[] = data.nodes
+        .filter((item: unknown) => typeof item === 'string' && item.trim())
+        .map((label: string, idx: number) => ({
+          id: crypto.randomUUID(),
+          x: 60 + (idx % 3) * 140,
+          y: 90 + Math.floor(idx / 3) * 90,
+          width: 120,
+          height: 40,
+          label,
+          color: `hsl(${(idx * 47 + 190) % 360} 70% 58%)`,
+        }));
+      if (nodes.length) {
+        updates.mindmapNodes = nodes;
+        updates.mindmapConnections = [];
+      }
+    }
+
+    if (Object.keys(updates).length > 0) board.updateElement(id, updates);
+  }, [board]);
+
+  const handleAIUpdateElement = useCallback((id: string, updates: Partial<BoardElementType>) => {
+    if (!id) return;
+    const safeUpdates = { ...updates };
+    delete (safeUpdates as any).id;
+    board.updateElement(id, safeUpdates);
+  }, [board]);
+
+  const handleAIArrangeBoard = useCallback(() => {
+    board.updateCurrentBoard((current) => {
+      if (!current.elements.length) return current;
+
+      const sorted = [...current.elements].sort((a, b) => a.y - b.y || a.x - b.x);
+      const paddingX = 60;
+      const paddingY = 60;
+      const gapX = 28;
+      const gapY = 24;
+      const cols = Math.max(2, Math.floor((window.innerWidth - 160) / 320));
+
+      const arranged = sorted.map((el, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        const x = paddingX + col * (Math.max(220, el.width) + gapX);
+        const y = paddingY + row * (Math.max(140, el.height) + gapY);
+        return { ...el, x, y, zIndex: index + 1 };
+      });
+
+      return { ...current, elements: arranged };
+    });
+  }, [board]);
+
   // Show login if not authenticated
   if (!user) return <Login onLogin={handleLogin} t={t} />;
 
@@ -222,6 +295,10 @@ const Index = () => {
         open={showAI}
         onClose={() => setShowAI(false)}
         elements={board.currentBoard.elements}
+        onAddElement={handleAIAddElement}
+        onUpdateElement={handleAIUpdateElement}
+        onDeleteElement={board.deleteElement}
+        onArrangeBoard={handleAIArrangeBoard}
         isRTL={isRTL}
         t={t}
       />

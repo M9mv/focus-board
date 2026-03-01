@@ -33,6 +33,14 @@ const Canvas = ({
   const dragStart = useRef({ x: 0, y: 0, elX: 0, elY: 0, elementId: '' });
   const resizeStart = useRef({ x: 0, y: 0, elW: 0, elH: 0, elementId: '', corner: '' });
   const mouseDownPos = useRef({ x: 0, y: 0 });
+  const pinchStart = useRef<{
+    distance: number;
+    zoom: number;
+    centerX: number;
+    centerY: number;
+    camX: number;
+    camY: number;
+  } | null>(null);
   const [cursorClass, setCursorClass] = useState('cursor-grab');
 
   const cameraRef = useRef(board.camera);
@@ -43,6 +51,7 @@ const Canvas = ({
   useEffect(() => { zoomLockedRef.current = board.zoomLocked; }, [board.zoomLocked]);
 
   const snap = (val: number) => snapToGrid ? Math.round(val / 20) * 20 : val;
+  const getTouchDistance = (a: { clientX: number; clientY: number }, b: { clientX: number; clientY: number }) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
 
   // Wheel zoom
   useEffect(() => {
@@ -117,20 +126,47 @@ const Canvas = ({
   // Touch events on document
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && pinchStart.current && !zoomLockedRef.current) {
+        e.preventDefault();
+        const [a, b] = [e.touches[0], e.touches[1]];
+        const currentDistance = getTouchDistance(a, b);
+        const zoomRatio = currentDistance / pinchStart.current.distance;
+        const nextZoom = Math.min(3, Math.max(0.35, pinchStart.current.zoom * zoomRatio));
+
+        const centerX = (a.clientX + b.clientX) / 2;
+        const centerY = (a.clientY + b.clientY) / 2;
+        const worldX = (pinchStart.current.centerX - pinchStart.current.camX) / pinchStart.current.zoom;
+        const worldY = (pinchStart.current.centerY - pinchStart.current.camY) / pinchStart.current.zoom;
+
+        onSetZoom(nextZoom);
+        onSetCamera({
+          x: centerX - worldX * nextZoom,
+          y: centerY - worldY * nextZoom,
+        });
+        onInteraction?.();
+        return;
+      }
+
       if (isPanning.current || isDraggingElement.current || isResizing.current) {
         e.preventDefault();
       }
       const touch = e.touches[0];
       if (touch) handlePointerMove(touch.clientX, touch.clientY);
     };
+
     const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) pinchStart.current = null;
       const touch = e.changedTouches[0];
-      if (touch) handlePointerUp(touch.clientX, touch.clientY);
+      if (touch && !pinchStart.current) handlePointerUp(touch.clientX, touch.clientY);
     };
+
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
-    return () => { document.removeEventListener('touchmove', handleTouchMove); document.removeEventListener('touchend', handleTouchEnd); };
-  }, [handlePointerMove, handlePointerUp]);
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handlePointerMove, handlePointerUp, onSetZoom, onSetCamera, onInteraction]);
 
   // Canvas pan start (mouse)
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -143,9 +179,26 @@ const Canvas = ({
     onInteraction?.();
   };
 
-  // Canvas pan start (touch)
+  // Canvas pan start / pinch start (touch)
   const handleCanvasTouchStart = (e: React.TouchEvent) => {
     if (board.zoomLocked) return;
+
+    if (e.touches.length === 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const centerX = (a.clientX + b.clientX) / 2;
+      const centerY = (a.clientY + b.clientY) / 2;
+      pinchStart.current = {
+        distance: getTouchDistance(a, b),
+        zoom: board.zoom,
+        centerX,
+        centerY,
+        camX: board.camera.x,
+        camY: board.camera.y,
+      };
+      isPanning.current = false;
+      return;
+    }
+
     const touch = e.touches[0];
     if (!touch) return;
     isPanning.current = true;
