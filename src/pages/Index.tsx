@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBoard } from '@/hooks/useBoard';
 import { useSettings } from '@/hooks/useSettings';
 import { useLanguage } from '@/i18n/useLanguage';
-import { ElementType } from '@/types/board';
+import { ElementType, BoardElement as BoardElementType, MindMapNode } from '@/types/board';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Canvas from '@/components/dashboard/Canvas';
