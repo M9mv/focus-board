@@ -12,7 +12,10 @@ interface AISidebarProps {
   open: boolean;
   onClose: () => void;
   elements: BoardElement[];
-  onAddElement?: (type: string, data: any) => void;
+  onAddElement?: (type: 'note' | 'todo' | 'mindmap', data?: any) => void;
+  onUpdateElement?: (id: string, updates: Partial<BoardElement>) => void;
+  onDeleteElement?: (id: string) => void;
+  onArrangeBoard?: () => void;
   isRTL?: boolean;
   t?: (key: string) => string;
 }
