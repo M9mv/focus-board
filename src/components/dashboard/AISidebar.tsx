@@ -41,18 +41,23 @@ const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onD
   const getBoardContext = useCallback(() => {
     if (!elements.length) return '';
     const parts: string[] = [];
-    elements.forEach(el => {
-      if (el.type === 'note' && el.content) parts.push(`ملاحظة: ${el.title || ''} - ${el.content}`);
-      if ((el.type === 'todo' || el.type === 'checklist') && el.todos?.length) {
-        const items = el.todos.map(t => `${t.completed ? '✅' : '⬜'} ${t.text}`).join(', ');
-        parts.push(`مهام (${el.title || ''}): ${items}`);
+
+    elements.forEach((el, index) => {
+      const base = `id:${el.id} | idx:${index + 1} | type:${el.type} | x:${Math.round(el.x)} | y:${Math.round(el.y)} | w:${Math.round(el.width)} | h:${Math.round(el.height)}`;
+      if (el.type === 'note') parts.push(`${base} | title:${el.title || ''} | content:${el.content || ''}`);
+      if (el.type === 'todo' || el.type === 'checklist') {
+        const items = (el.todos || []).map((todo) => `${todo.completed ? '✅' : '⬜'} ${todo.text}`).join(' | ');
+        parts.push(`${base} | title:${el.title || ''} | todos:${items}`);
       }
-      if (el.type === 'textbox' && el.content) parts.push(`نص: ${el.content}`);
-      if (el.type === 'mindmap' && el.mindmapNodes?.length) {
-        const nodes = el.mindmapNodes.map(n => n.label).join(', ');
-        parts.push(`خريطة ذهنية (${el.title || ''}): ${nodes}`);
+      if (el.type === 'textbox') parts.push(`${base} | title:${el.title || ''} | text:${el.content || ''}`);
+      if (el.type === 'mindmap') {
+        const nodes = (el.mindmapNodes || []).map((n) => `${n.id}:${n.label}(${Math.round(n.x)},${Math.round(n.y)})`).join(' | ');
+        parts.push(`${base} | title:${el.title || ''} | nodes:${nodes}`);
       }
+      if (el.type === 'icon') parts.push(`${base} | emoji:${el.emoji || ''}`);
+      if (el.type === 'image') parts.push(`${base} | image:${el.fileName || 'attached'}`);
     });
+
     return parts.join('\n');
   }, [elements]);
 
