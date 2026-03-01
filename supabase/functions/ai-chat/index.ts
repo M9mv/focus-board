@@ -32,8 +32,8 @@ serve(async (req) => {
 تعليمات مهمة:
 - لا تستخدم رموز مشوهة أو نص غير مفهوم.
 - اجعل الرد الطبيعي مختصرًا وواضحًا، ثم أضف ACTION blocks عند الحاجة.
+- إذا نفذت CREATE أو UPDATE أو DELETE فأضف بعدها [ACTION:ARRANGE_BOARD]{"mode":"balanced"}[/ACTION] لترتيب اللوحة.
 - إذا لم تتوفر id دقيقة، اطلب من الطالب تأكيد العنصر قبل الحذف/التعديل.
-- أجب دائمًا باللغة التي يستخدمها الطالب.
 ${boardContext ? `\nمحتوى اللوحة الحالية:\n${boardContext}` : ''}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
