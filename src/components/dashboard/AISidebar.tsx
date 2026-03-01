@@ -20,7 +20,7 @@ interface AISidebarProps {
   t?: (key: string) => string;
 }
 
-const AISidebar = ({ open, onClose, elements, onAddElement, isRTL, t }: AISidebarProps) => {
+const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onDeleteElement, onArrangeBoard, isRTL, t }: AISidebarProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
