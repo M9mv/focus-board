@@ -33,7 +33,8 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const [editingTitle, setEditingTitle] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState('📚');
-  const [hovered, setHovered] = useState(false);
+  const [customEmoji, setCustomEmoji] = useState('');
+  const [hovered] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
