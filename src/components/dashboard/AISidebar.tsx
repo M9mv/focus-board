@@ -194,46 +194,26 @@ const AISidebar = ({ open, onClose, elements, onAddElement, onUpdateElement, onD
         throw new Error(errData.error || `Error ${resp.status}`);
       }
 
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let textBuffer = '';
-
       const upsert = (chunk: string) => {
         assistantContent += chunk;
+        const cleanText = stripActionBlocks(assistantContent);
         setMessages(prev => {
           const last = prev[prev.length - 1];
           if (last?.role === 'assistant') {
-            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+            return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: cleanText } : m);
           }
-          return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: assistantContent }];
+          return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: cleanText }];
         });
       };
 
-      let streamDone = false;
-      while (!streamDone) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        textBuffer += decoder.decode(value, { stream: true });
+      await readSSE(resp, upsert);
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (line.startsWith(':') || line.trim() === '') continue;
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') { streamDone = true; break; }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsert(content);
-          } catch {
-            textBuffer = line + '\n' + textBuffer;
-            break;
-          }
-        }
-      }
+      const finalClean = runActionsFromText(assistantContent);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role !== 'assistant') return [...prev, { id: crypto.randomUUID(), role: 'assistant', content: finalClean }];
+        return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: finalClean } : m);
+      });
     } catch (e: any) {
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(), role: 'assistant',
