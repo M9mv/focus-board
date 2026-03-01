@@ -14,15 +14,24 @@ const ExportBoardDialog = ({ open, onClose, t }: ExportBoardDialogProps) => {
   const _ = (key: string) => t?.(key) || key;
 
   const captureCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    // Find the canvas container (the flex-1 relative overflow-hidden div)
     const canvasEl = document.querySelector('[data-board-canvas]') as HTMLElement;
     if (!canvasEl) return null;
-    
+
+    const rect = canvasEl.getBoundingClientRect();
+    const computed = getComputedStyle(canvasEl);
+    const bg = computed.backgroundColor || 'hsl(var(--background))';
+
     try {
       const canvas = await html2canvas(canvasEl, {
-        backgroundColor: null,
+        backgroundColor: bg,
         useCORS: true,
-        scale: 2,
+        scale: Math.min(3, window.devicePixelRatio > 1 ? 2 : 1.5),
+        width: rect.width,
+        height: rect.height,
+        x: 0,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0,
         logging: false,
       });
       return canvas;
