@@ -179,9 +179,26 @@ const Canvas = ({
     onInteraction?.();
   };
 
-  // Canvas pan start (touch)
+  // Canvas pan start / pinch start (touch)
   const handleCanvasTouchStart = (e: React.TouchEvent) => {
     if (board.zoomLocked) return;
+
+    if (e.touches.length === 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const centerX = (a.clientX + b.clientX) / 2;
+      const centerY = (a.clientY + b.clientY) / 2;
+      pinchStart.current = {
+        distance: getTouchDistance(a, b),
+        zoom: board.zoom,
+        centerX,
+        centerY,
+        camX: board.camera.x,
+        camY: board.camera.y,
+      };
+      isPanning.current = false;
+      return;
+    }
+
     const touch = e.touches[0];
     if (!touch) return;
     isPanning.current = true;
