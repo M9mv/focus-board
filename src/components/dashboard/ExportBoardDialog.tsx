@@ -60,14 +60,27 @@ const ExportBoardDialog = ({ open, onClose, t }: ExportBoardDialogProps) => {
     try {
       const canvas = await captureCanvas();
       if (!canvas) return;
+
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
-        unit: 'px',
-        format: [canvas.width, canvas.height],
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-      pdf.save(`board-${Date.now()}.pdf`);
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const maxW = pageWidth - margin * 2;
+      const maxH = pageHeight - margin * 2;
+      const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
+      const renderW = canvas.width * ratio;
+      const renderH = canvas.height * ratio;
+      const offsetX = (pageWidth - renderW) / 2;
+      const offsetY = (pageHeight - renderH) / 2;
+
+      pdf.addImage(imgData, 'PNG', offsetX, offsetY, renderW, renderH, undefined, 'FAST');
+      pdf.save(`board-view-${Date.now()}.pdf`);
     } finally {
       setExporting(false);
       onClose();
