@@ -55,6 +55,7 @@ export interface Board {
   bgColor: string;
   gridColor: string;
   showGrid: boolean;
+  isCollaborative: boolean;
   elements: BoardElement[];
   camera: { x: number; y: number };
   zoom: number;

@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles, Users } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -19,12 +19,14 @@ interface TopBarProps {
   showAI?: boolean;
   isRTL?: boolean;
   t?: (key: string) => string;
+  isCollaborative?: boolean;
+  onShare?: () => void;
 }
 
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
-  onLogout, onHome, onCalendar, onExport, onToggleAI, showAI, isRTL, t,
+  onLogout, onHome, onCalendar, onExport, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
@@ -69,6 +71,15 @@ const TopBar = ({
         <span className="text-xs text-muted-foreground mr-2 tabular-nums max-md:hidden">
           {Math.round(zoom * 100)}%
         </span>
+        {isCollaborative && (
+          <button
+            onClick={onShare}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary active:scale-95"
+            title={t?.('share') || 'Share'}
+          >
+            <Users className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={onExport}
           className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"

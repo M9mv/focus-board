@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useBoard } from '@/hooks/useBoard';
 import { useSettings } from '@/hooks/useSettings';
 import { useLanguage } from '@/i18n/useLanguage';
+import { useAuth } from '@/hooks/useAuth';
 import { ElementType, BoardElement as BoardElementType, MindMapNode } from '@/types/board';
+import { supabase } from '@/integrations/supabase/client';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Canvas from '@/components/dashboard/Canvas';
@@ -15,6 +17,7 @@ import NewBoardDialog from '@/components/dashboard/NewBoardDialog';
 import SettingsDialog from '@/components/dashboard/SettingsDialog';
 import ExportBoardDialog from '@/components/dashboard/ExportBoardDialog';
 import AISidebar from '@/components/dashboard/AISidebar';
+import ShareBoardDialog from '@/components/dashboard/ShareBoardDialog';
 import CalendarPage from '@/pages/CalendarPage';
 import Login from '@/pages/Login';
 
@@ -22,17 +25,30 @@ const Index = () => {
   const board = useBoard();
   const { settings, updateSettings } = useSettings();
   const { lang, setLang, t, isRTL } = useLanguage();
+  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
-  // Auth state
-  const [user, setUser] = useState<string | null>(() => {
-    return localStorage.getItem('study-dashboard-user');
-  });
+  // Handle invite token from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteToken = params.get('invite');
+    if (inviteToken && user) {
+      supabase.functions.invoke('accept-invite', {
+        body: { token: inviteToken },
+      }).then(({ data }) => {
+        if (data?.board_id) {
+          // Clear invite param
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      });
+    }
+  }, [user]);
 
   // MiniMap: show temporarily on pan/zoom
   const [miniMapVisible, setMiniMapVisible] = useState(false);
@@ -110,13 +126,16 @@ const Index = () => {
     localStorage.setItem('water-remind-at', String(Date.now() + 25 * 60 * 1000));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('study-dashboard-user');
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut();
   };
 
-  const handleLogin = (username: string) => {
-    setUser(username);
+  const handleLogin = async (email: string, password: string) => {
+    return await signIn(email, password);
+  };
+
+  const handleSignUp = async (email: string, password: string, displayName: string) => {
+    return await signUp(email, password, displayName);
   };
 
   const handleHome = () => {
@@ -200,8 +219,19 @@ const Index = () => {
     });
   }, [board]);
 
+  // Show loading
+  if (authLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
   // Show login if not authenticated
-  if (!user) return <Login onLogin={handleLogin} t={t} />;
+  if (!user) return <Login onLogin={handleLogin} onSignUp={handleSignUp} t={t} />;
+
+  const displayName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
 
   // Full-page calendar
   if (showCalendar) return <CalendarPage onBack={() => setShowCalendar(false)} t={t} isRTL={isRTL} />;
@@ -226,10 +256,12 @@ const Index = () => {
         showAI={showAI}
         isRTL={isRTL}
         t={t}
+        isCollaborative={board.currentBoard.isCollaborative}
+        onShare={() => setShowShare(true)}
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={user} isRTL={isRTL} t={t} />
+        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={displayName} isRTL={isRTL} t={t} />
         <Canvas
           board={board.currentBoard}
           selectedElementId={board.selectedElementId}
@@ -300,6 +332,14 @@ const Index = () => {
         onDeleteElement={board.deleteElement}
         onArrangeBoard={handleAIArrangeBoard}
         isRTL={isRTL}
+        t={t}
+      />
+      <ShareBoardDialog
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        boardId={board.currentBoardId}
+        boardName={board.currentBoard.name}
+        isOwner={true}
         t={t}
       />
     </div>
