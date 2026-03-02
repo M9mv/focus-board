@@ -71,6 +71,15 @@ const TopBar = ({
         <span className="text-xs text-muted-foreground mr-2 tabular-nums max-md:hidden">
           {Math.round(zoom * 100)}%
         </span>
+        {isCollaborative && (
+          <button
+            onClick={onShare}
+            className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary active:scale-95"
+            title={t?.('share') || 'Share'}
+          >
+            <Users className="w-4 h-4" />
+          </button>
+        )}
         <button
           onClick={onExport}
           className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
