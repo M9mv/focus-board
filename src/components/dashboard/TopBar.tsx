@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles, Users } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -19,6 +19,8 @@ interface TopBarProps {
   showAI?: boolean;
   isRTL?: boolean;
   t?: (key: string) => string;
+  isCollaborative?: boolean;
+  onShare?: () => void;
 }
 
 const TopBar = ({
