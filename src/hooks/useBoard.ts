@@ -10,6 +10,7 @@ const createDefaultBoard = (): Board => ({
   bgColor: 'hsl(0, 0%, 0%)',
   gridColor: 'hsl(0, 0%, 100%)',
   showGrid: true,
+  isCollaborative: false,
   elements: [],
   camera: { x: 0, y: 0 },
   zoom: 1,
@@ -46,8 +47,8 @@ export const useBoard = () => {
     }));
   }, []);
 
-  const addBoard = useCallback((name: string, bgColor: string, gridColor: string, showGrid: boolean) => {
-    const newBoard: Board = { ...createDefaultBoard(), name, bgColor, gridColor, showGrid };
+  const addBoard = useCallback((name: string, bgColor: string, gridColor: string, showGrid: boolean, isCollaborative: boolean = false) => {
+    const newBoard: Board = { ...createDefaultBoard(), name, bgColor, gridColor, showGrid, isCollaborative };
     setState(prev => ({
       boards: [...prev.boards, newBoard],
       currentBoardId: newBoard.id,
