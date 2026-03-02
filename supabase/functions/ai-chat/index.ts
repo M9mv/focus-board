@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { messages, boardContext } = await req.json();
-    const API_KEY = Deno.env.get("GROK_API_KEY") || Deno.env.get("LOVABLE_API_KEY");
-    if (!API_KEY) throw new Error("No API key configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = `أنت مساعد ذكي متخصص في مساعدة الطلاب وإدارة اللوحة الدراسية.
 قدراتك:
