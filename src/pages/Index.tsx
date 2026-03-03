@@ -18,6 +18,7 @@ import SettingsDialog from '@/components/dashboard/SettingsDialog';
 import ExportBoardDialog from '@/components/dashboard/ExportBoardDialog';
 import AISidebar from '@/components/dashboard/AISidebar';
 import ShareBoardDialog from '@/components/dashboard/ShareBoardDialog';
+import CompleteProfileDialog from '@/components/auth/CompleteProfileDialog';
 import CalendarPage from '@/pages/CalendarPage';
 import Login from '@/pages/Login';
 
@@ -25,7 +26,7 @@ const Index = () => {
   const board = useBoard();
   const { settings, updateSettings } = useSettings();
   const { lang, setLang, t, isRTL } = useLanguage();
-  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth();
+  const { user, loading: authLoading, profile, profileLoading, signInWithOAuth, updateProfile, signOut } = useAuth();
   const [showPomodoro, setShowPomodoro] = useState(false);
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -130,12 +131,12 @@ const Index = () => {
     await signOut();
   };
 
-  const handleLogin = async (email: string, password: string) => {
-    return await signIn(email, password);
+  const handleGoogleLogin = async () => {
+    return await signInWithOAuth('google');
   };
 
-  const handleSignUp = async (email: string, password: string, displayName: string) => {
-    return await signUp(email, password, displayName);
+  const handleAppleLogin = async () => {
+    return await signInWithOAuth('apple');
   };
 
   const handleHome = () => {
@@ -229,9 +230,10 @@ const Index = () => {
   }
 
   // Show login if not authenticated
-  if (!user) return <Login onLogin={handleLogin} onSignUp={handleSignUp} t={t} />;
+  if (!user) return <Login onGoogleLogin={handleGoogleLogin} onAppleLogin={handleAppleLogin} t={t} />;
 
-  const displayName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
+  const displayName = profile?.display_name?.trim() || user.user_metadata?.display_name || user.email?.split('@')[0] || 'User';
+  const needsProfile = !profileLoading && (!profile?.display_name?.trim() || !profile?.avatar_url?.trim());
 
   // Full-page calendar
   if (showCalendar) return <CalendarPage onBack={() => setShowCalendar(false)} t={t} isRTL={isRTL} />;
@@ -341,6 +343,12 @@ const Index = () => {
         boardName={board.currentBoard.name}
         isOwner={true}
         t={t}
+      />
+      <CompleteProfileDialog
+        open={needsProfile}
+        defaultName={profile?.display_name || user.user_metadata?.display_name || ''}
+        defaultAvatar={profile?.avatar_url || ''}
+        onSubmit={updateProfile}
       />
     </div>
   );
