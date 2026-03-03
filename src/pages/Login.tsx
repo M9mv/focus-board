@@ -56,7 +56,7 @@ const Login = ({ onGoogleLogin, onAppleLogin, t }: LoginProps) => {
             disabled={loadingProvider !== null}
             className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            <Chrome className="w-4 h-4" />
+            <GoogleIcon />
             {loadingProvider === 'google' ? '...' : 'Continue with Google'}
           </button>
 
@@ -65,7 +65,7 @@ const Login = ({ onGoogleLogin, onAppleLogin, t }: LoginProps) => {
             disabled={loadingProvider !== null}
             className="w-full py-3 px-4 rounded-xl bg-secondary text-secondary-foreground text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            <Apple className="w-4 h-4" />
+            <AppleIcon />
             {loadingProvider === 'apple' ? '...' : 'Continue with Apple'}
           </button>
         </div>
