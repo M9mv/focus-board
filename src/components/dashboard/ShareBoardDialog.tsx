@@ -23,6 +23,7 @@ const ShareBoardDialog = ({ open, onClose, boardId, boardName, isOwner, t }: Sha
   const [inviteLink, setInviteLink] = useState('');
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open || !boardId) return;
@@ -52,16 +53,51 @@ const ShareBoardDialog = ({ open, onClose, boardId, boardName, isOwner, t }: Sha
 
   const generateInviteLink = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    setError('');
+
+    const { data: authData } = await supabase.auth.getUser();
+    const user = authData.user;
+
+    if (!user) {
+      setError('You must be logged in');
+      setLoading(false);
+      return;
+    }
+
+    const { data: existingBoard } = await supabase
+      .from('boards')
+      .select('id')
+      .eq('id', boardId)
+      .maybeSingle();
+
+    if (!existingBoard) {
+      const { error: createBoardError } = await supabase.from('boards').insert({
+        id: boardId,
+        owner_id: user.id,
+        name: boardName || 'Collaborative Board',
+        is_collaborative: true,
+      });
+
+      if (createBoardError) {
+        setError(createBoardError.message || 'Failed to prepare collaborative board');
+        setLoading(false);
+        return;
+      }
+    }
+
+    const { data, error: inviteError } = await supabase
       .from('board_invites')
       .insert({ board_id: boardId, role: 'editor' })
       .select('token')
       .single();
 
-    if (data && !error) {
+    if (inviteError) {
+      setError(inviteError.message || 'Failed to generate link');
+    } else if (data?.token) {
       const link = `${window.location.origin}?invite=${data.token}`;
       setInviteLink(link);
     }
+
     setLoading(false);
   };
 
@@ -115,6 +151,8 @@ const ShareBoardDialog = ({ open, onClose, boardId, boardName, isOwner, t }: Sha
             )}
           </div>
         )}
+
+        {error && <p className="text-xs text-destructive mb-3">{error}</p>}
 
         {/* Members list */}
         <label className="block text-xs font-medium text-muted-foreground mb-2">

@@ -203,6 +203,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   };
 
   const stopProp = (e: React.MouseEvent | React.TouchEvent) => e.stopPropagation();
+  const isMindMapConnectMode = element.type === 'mindmap' && Boolean(connectingFrom);
 
   const renderContent = () => {
     switch (element.type) {
@@ -368,7 +369,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
         return (
           <div className="w-full h-full relative overflow-hidden">
             {/* Title bar - draggable area for the whole element */}
-            <div className="absolute top-0 left-0 right-0 p-2 flex items-center justify-between z-10 bg-card/60 backdrop-blur-sm border-b border-border/30 cursor-move">
+            <div className={`absolute top-0 left-0 right-0 p-2 flex items-center justify-between z-10 bg-card/60 backdrop-blur-sm border-b border-border/30 ${isMindMapConnectMode ? 'cursor-default' : 'cursor-move'}`}>
               {renderTitle()}
               <div className="flex gap-1">
                 <button onClick={addMindMapNode} className="p-1 rounded-lg hover:bg-secondary transition-colors" title={t?.('newNode') || 'Add node'}>
@@ -409,7 +410,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
               <div
                 key={node.id}
                 className={`absolute rounded-xl px-2 py-1 text-xs font-medium cursor-move flex items-center gap-1 ios-shadow-sm select-none border border-white/20 transition-shadow ${connectingFrom ? 'ring-2 ring-primary/50 cursor-crosshair' : 'hover:ios-shadow-lg'}`}
-                style={{ left: node.x, top: node.y, width: node.width, backgroundColor: node.color || 'hsl(var(--primary))', color: '#fff', zIndex: 1, touchAction: 'none' }}
+                style={{ left: node.x, top: node.y, width: node.width, backgroundColor: node.color || 'hsl(var(--primary))', color: 'hsl(var(--primary-foreground))', zIndex: 1, touchAction: 'none' }}
                 onMouseDown={(e) => handleNodePointerDown(node.id, e.clientX, e.clientY, e)}
                 onTouchStart={(e) => {
                   const touch = e.touches[0];
@@ -418,20 +419,25 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
               >
                 {node.emoji && <span className="text-sm">{node.emoji}</span>}
                 <input
-                  className="bg-transparent outline-none text-white text-xs flex-1 min-w-0"
+                  className="bg-transparent outline-none text-primary-foreground text-xs flex-1 min-w-0"
                   value={node.label}
+                  readOnly={isMindMapConnectMode}
                   onChange={(e) => updateNodeLabel(node.id, e.target.value)}
-                  onMouseDown={stopProp}
-                  onTouchStart={stopProp}
+                  onMouseDown={isMindMapConnectMode ? undefined : stopProp}
+                  onTouchStart={isMindMapConnectMode ? undefined : stopProp}
                 />
-                <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="opacity-50 hover:opacity-100 text-white shrink-0">
-                  <Trash2 className="w-3 h-3" />
-                </button>
+                {!isMindMapConnectMode && (
+                  <button onClick={(e) => { e.stopPropagation(); deleteNode(node.id); }} className="opacity-50 hover:opacity-100 text-primary-foreground shrink-0">
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
               </div>
             ))}
             {connectingFrom === '__pick__' && (
               <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-card/80 px-3 py-1 rounded-full backdrop-blur-sm z-10">
-                {t?.('clickNodeToConnect') || 'Click a node to start connecting'}
+                {connectingFrom === '__pick__'
+                  ? (t?.('clickNodeToConnect') || 'Click a node to start connecting')
+                  : (t?.('clickNodeToConnect') || 'Click a node to start connecting')}
               </div>
             )}
           </div>
@@ -482,8 +488,20 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
         transformOrigin: 'center center',
         touchAction: 'none',
       }}
-      onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
+      onMouseDown={(e) => {
+        if (isMindMapConnectMode) {
+          e.stopPropagation();
+          return;
+        }
+        onMouseDown(e);
+      }}
+      onTouchStart={(e) => {
+        if (isMindMapConnectMode) {
+          e.stopPropagation();
+          return;
+        }
+        onTouchStart?.(e);
+      }}
     >
       <div className={`w-full h-full overflow-hidden ${element.type !== 'divider' ? 'rounded-xl' : ''}`}>
         {renderContent()}
