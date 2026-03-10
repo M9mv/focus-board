@@ -39,6 +39,13 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Voice note state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
   // Mind map state
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
 
