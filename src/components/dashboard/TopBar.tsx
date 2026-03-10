@@ -81,11 +81,11 @@ const TopBar = ({
           </button>
         )}
         <button
-          onClick={onExport}
+          onClick={onFullscreen}
           className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
-          title={t?.('export') || 'Export'}
+          title={t?.('fullscreen') || 'Fullscreen'}
         >
-          <Download className="w-4 h-4" />
+          <Maximize className="w-4 h-4" />
         </button>
         <button
           onClick={onTogglePomodoro}
