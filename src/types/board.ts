@@ -91,7 +91,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pomodoroBreak: 5,
   waterReminder: true,
   pomodoroNotifications: true,
-  customPrimaryColor: '211 100% 50%',
+  customPrimaryColor: '181 39% 51%',
 };
 
 // Default sizes for each element type
