@@ -253,7 +253,7 @@ const Index = () => {
         onLogout={handleLogout}
         onHome={handleHome}
         onCalendar={() => setShowCalendar(true)}
-        onExport={() => setShowExport(true)}
+        onFullscreen={() => setIsFullscreen(true)}
         onToggleAI={() => setShowAI(!showAI)}
         showAI={showAI}
         isRTL={isRTL}
