@@ -206,6 +206,14 @@ export const translations = {
     changeEmoji: 'تغيير الإيموجي',
     pasteAnyEmoji: 'الصق أي إيموجي',
     apply: 'تطبيق',
+    voiceNote: 'ملاحظة صوتية',
+    recording: 'جاري التسجيل...',
+    tapToRecord: 'اضغط للتسجيل',
+    fullscreen: 'ملء الشاشة',
+    exitFullscreen: 'خروج من ملء الشاشة',
+    collaborativeBoard: 'لوحة تعاونية',
+    collaborativeDesc: 'شارك وعدّل مع الآخرين',
+    share: 'مشاركة',
   },
 } as const;
 
