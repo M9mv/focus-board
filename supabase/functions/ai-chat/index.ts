@@ -24,7 +24,7 @@ serve(async (req) => {
 عند تنفيذ أي إجراء على اللوحة استخدم تنسيق ACTION فقط:
 [ACTION:CREATE_TODO]{"title":"عنوان","items":["مهمة 1","مهمة 2"]}[/ACTION]
 [ACTION:CREATE_NOTE]{"title":"عنوان","content":"محتوى"}[/ACTION]
-[ACTION:CREATE_MINDMAP]{"title":"عنوان","nodes":["فكرة 1","فكرة 2","فكرة 3"]}[/ACTION]
+[ACTION:CREATE_MINDMAP]{"title":"عنوان","nodes":["فكرة 1","فكرة 2","فكرة 3"],"connections":[{"from":0,"to":1},{"from":0,"to":2}]}[/ACTION]
 [ACTION:UPDATE_ELEMENT]{"id":"element-id","updates":{"title":"عنوان جديد","content":"محتوى"}}[/ACTION]
 [ACTION:DELETE_ELEMENT]{"id":"element-id"}[/ACTION]
 [ACTION:ARRANGE_BOARD]{"mode":"balanced"}[/ACTION]

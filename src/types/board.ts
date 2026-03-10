@@ -1,5 +1,5 @@
 // Element types available on the board
-export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'mindmap';
+export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'mindmap' | 'voice';
 
 export interface TodoItem {
   id: string;
@@ -30,6 +30,9 @@ export interface BoardElement {
   // Mind map specific
   mindmapNodes?: MindMapNode[];
   mindmapConnections?: MindMapConnection[];
+  // Voice note specific
+  audioUrl?: string;       // data URL for recorded audio
+  audioDuration?: number;  // seconds
 }
 
 export interface MindMapNode {
@@ -88,7 +91,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   pomodoroBreak: 5,
   waterReminder: true,
   pomodoroNotifications: true,
-  customPrimaryColor: '211 100% 50%',
+  customPrimaryColor: '181 39% 51%',
 };
 
 // Default sizes for each element type
@@ -101,6 +104,7 @@ export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height:
   divider: { width: 300, height: 4 },
   icon: { width: 80, height: 80 },
   mindmap: { width: 500, height: 400 },
+  voice: { width: 260, height: 100 },
 };
 
 // Labels shown in sidebar
@@ -113,4 +117,5 @@ export const ELEMENT_LABELS: Record<ElementType, string> = {
   divider: 'Divider',
   icon: 'Emoji',
   mindmap: 'Mind Map',
+  voice: 'Voice Note',
 };

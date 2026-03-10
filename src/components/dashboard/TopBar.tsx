@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles, Users } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Maximize, Sparkles, Users } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
@@ -14,7 +14,7 @@ interface TopBarProps {
   onLogout: () => void;
   onHome: () => void;
   onCalendar: () => void;
-  onExport?: () => void;
+  onFullscreen?: () => void;
   onToggleAI?: () => void;
   showAI?: boolean;
   isRTL?: boolean;
@@ -26,7 +26,7 @@ interface TopBarProps {
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
-  onLogout, onHome, onCalendar, onExport, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
+  onLogout, onHome, onCalendar, onFullscreen, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
@@ -81,11 +81,11 @@ const TopBar = ({
           </button>
         )}
         <button
-          onClick={onExport}
+          onClick={onFullscreen}
           className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
-          title={t?.('export') || 'Export'}
+          title={t?.('fullscreen') || 'Fullscreen'}
         >
-          <Download className="w-4 h-4" />
+          <Maximize className="w-4 h-4" />
         </button>
         <button
           onClick={onTogglePomodoro}

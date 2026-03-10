@@ -9,6 +9,7 @@ interface NewBoardDialogProps {
 }
 
 const BG_PRESETS = [
+  { label: 'Teal', value: '#52b1b2' },
   { label: 'Black', value: 'hsl(0, 0%, 0%)' },
   { label: 'White', value: 'hsl(0, 0%, 100%)' },
   { label: 'Default', value: 'hsl(220, 14%, 96%)' },
@@ -19,6 +20,7 @@ const BG_PRESETS = [
 ];
 
 const GRID_PRESETS = [
+  { label: 'Soft White', value: '#fdfcfd' },
   { label: 'White', value: 'hsl(0, 0%, 100%)' },
   { label: 'Gray', value: 'hsl(220, 14%, 82%)' },
   { label: 'Blue', value: 'hsl(211, 40%, 80%)' },

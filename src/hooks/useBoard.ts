@@ -7,8 +7,8 @@ const STORAGE_KEY = 'study-dashboard-boards';
 const createDefaultBoard = (): Board => ({
   id: crypto.randomUUID(),
   name: 'My Board',
-  bgColor: 'hsl(0, 0%, 0%)',
-  gridColor: 'hsl(0, 0%, 100%)',
+  bgColor: '#52b1b2',
+  gridColor: '#fdfcfd',
   showGrid: true,
   isCollaborative: false,
   elements: [],
@@ -81,6 +81,7 @@ export const useBoard = () => {
     if (type === 'checklist') { defaults.title = 'Checklist'; defaults.todos = [{ id: crypto.randomUUID(), text: 'Item 1', completed: false }]; }
     if (type === 'icon') defaults.emoji = '📚';
     if (type === 'image') defaults.title = 'Image Card';
+    if (type === 'voice') defaults.title = 'Voice Note';
     if (type === 'mindmap') {
       defaults.title = 'Mind Map';
       const centerId = crypto.randomUUID();

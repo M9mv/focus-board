@@ -1,18 +1,20 @@
 import { useState, useRef, useCallback, memo } from 'react';
 import {
-  ImageIcon, Trash2, Copy, Plus, RotateCw, Palette, Smile,
+  ImageIcon, Trash2, Copy, Plus, RotateCw, Palette, Smile, Mic, Square, Play, Pause,
 } from 'lucide-react';
 import { BoardElement as BoardElementType, TodoItem, MindMapNode, MindMapConnection } from '@/types/board';
 
 // Common emoji categories for quick picking
 const EMOJI_CATEGORIES: Record<string, string[]> = {
-  '📚': ['📚','📖','✏️','📝','💡','🎯','⭐','📐','📏','🖊️','📌','📎','🗂️','📓','🗒️','🔖'],
-  '😀': ['😀','😁','😂','🤣','😊','😍','🥰','😎','🤔','😴','🥳','😇','🤗','😤','😱','🤯'],
-  '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💖','💝','💔','❣️','💕','💞','💓','💗'],
-  '🐱': ['🐱','🐶','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦋'],
-  '🍎': ['🍎','🍊','🍋','🍇','🍉','🍓','🫐','🥑','🍕','🍔','🍩','🍪','☕','🧁','🍰','🧃'],
-  '⚡': ['⚡','🔥','💪','🧠','🏆','🎉','💻','🎨','🎵','🌈','☀️','🌙','🍀','🌸','✅','❌'],
-  '🚀': ['🚀','✈️','🚗','🏠','🏫','🏥','⚽','🏀','🎮','🎲','🎭','🎬','📷','🔔','⏰','📅'],
+  '📚': ['📚','📖','✏️','📝','💡','🎯','⭐','📐','📏','🖊️','📌','📎','🗂️','📓','🗒️','🔖','🧮','📊','📈','🧪','🔬','🔭','💻','🖥️','⌨️','🖱️'],
+  '😀': ['😀','😁','😂','🤣','😊','😍','🥰','😎','🤔','😴','🥳','😇','🤗','😤','😱','🤯','😶','🫡','🫠','🤩','🥺','😏','😌','🤓','😈','👻'],
+  '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','💖','💝','💔','❣️','💕','💞','💓','💗','🩷','🩵','🩶','❤️‍🔥','❤️‍🩹','💘','💟','♥️','🫶','🤟'],
+  '🐱': ['🐱','🐶','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🦋','🐢','🐙','🦄','🐝','🐞','🦎','🐍','🐠','🐡','🦈'],
+  '🍎': ['🍎','🍊','🍋','🍇','🍉','🍓','🫐','🥑','🍕','🍔','🍩','🍪','☕','🧁','🍰','🧃','🍫','🥤','🧋','🍿','🥐','🥯','🍳','🥗','🌮','🍣'],
+  '⚡': ['⚡','🔥','💪','🧠','🏆','🎉','💻','🎨','🎵','🌈','☀️','🌙','🍀','🌸','✅','❌','💫','🪄','🎁','🧲','💎','🔑','🛡️','⚔️','🧿','🪬'],
+  '🚀': ['🚀','✈️','🚗','🏠','🏫','🏥','⚽','🏀','🎮','🎲','🎭','🎬','📷','🔔','⏰','📅','🗺️','🌍','🛸','🎪','🎡','🏔️','🌋','🏖️','🗿','🎠'],
+  '🏳️': ['🇸🇦','🇦🇪','🇪🇬','🇮🇶','🇯🇴','🇰🇼','🇶🇦','🇧🇭','🇴🇲','🇱🇧','🇸🇾','🇾🇪','🇱🇾','🇹🇳','🇲🇦','🇩🇿','🇸🇩','🇵🇸','🇺🇸','🇬🇧','🇫🇷','🇩🇪','🇯🇵','🇰🇷','🇨🇳','🏴'],
+  '👋': ['👋','👍','👎','👏','🤝','✌️','🤞','🫰','👆','👇','👈','👉','☝️','🙏','💅','🤳','💪','🫵','🤙','✊','👊','🫡','🙌','👐','🤲','✋'],
 };
 
 interface BoardElementProps {
@@ -36,6 +38,13 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const [customEmoji, setCustomEmoji] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Voice note state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // Mind map state
   const [connectingFrom, setConnectingFrom] = useState<string | null>(null);
@@ -89,6 +98,50 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
     setCustomEmoji('');
     setShowEmojiPicker(false);
   };
+
+  // ===== Voice Note helpers =====
+  const startRecording = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+      mediaRecorder.ondataavailable = (ev) => { if (ev.data.size > 0) chunksRef.current.push(ev.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          onUpdate({ audioUrl: reader.result as string });
+        };
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch { /* mic permission denied */ }
+  }, [onUpdate]);
+
+  const stopRecording = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  }, []);
+
+  const togglePlayback = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (!element.audioUrl) return;
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+    const audio = new Audio(element.audioUrl);
+    audioRef.current = audio;
+    audio.onended = () => setIsPlaying(false);
+    audio.play();
+    setIsPlaying(true);
+  }, [element.audioUrl, isPlaying]);
 
   // ===== Mind Map helpers =====
   const addMindMapNode = useCallback((e: React.MouseEvent) => {
@@ -180,6 +233,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const bgClass: Record<string, string> = {
     note: 'element-note', todo: 'element-todo', textbox: 'element-text',
     checklist: 'element-checklist', image: 'element-image', mindmap: 'bg-card/80',
+    voice: 'bg-card',
   };
 
   const renderTitle = () => {
@@ -440,6 +494,53 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
                   : (t?.('clickNodeToConnect') || 'Click a node to start connecting')}
               </div>
             )}
+          </div>
+        );
+      case 'voice':
+        return (
+          <div className="p-3 h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 rounded-xl">
+            {element.audioUrl ? (
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={togglePlayback}
+                  onMouseDown={stopProp}
+                  onTouchStart={stopProp}
+                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0 active:scale-95 transition-transform"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                </button>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-foreground">🎙️ {t?.('voiceNote') || 'Voice Note'}</div>
+                  <div className="w-full h-1.5 rounded-full bg-secondary mt-1">
+                    <div className={`h-full rounded-full bg-primary transition-all ${isPlaying ? 'animate-pulse w-full' : 'w-0'}`} />
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdate({ audioUrl: undefined }); }}
+                  onMouseDown={stopProp}
+                  onTouchStart={stopProp}
+                  className="p-1 rounded-lg hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                onMouseDown={stopProp}
+                onTouchStart={stopProp}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                  isRecording
+                    ? 'bg-destructive text-destructive-foreground animate-pulse'
+                    : 'bg-primary text-primary-foreground hover:opacity-90'
+                }`}
+              >
+                {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-6 h-6" />}
+              </button>
+            )}
+            <span className="text-[10px] text-muted-foreground">
+              {isRecording ? (t?.('recording') || 'Recording...') : (!element.audioUrl ? (t?.('tapToRecord') || 'Tap to record') : '')}
+            </span>
           </div>
         );
       default:
