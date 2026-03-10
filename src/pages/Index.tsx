@@ -31,7 +31,7 @@ const Index = () => {
   const [showNewBoard, setShowNewBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showExport, setShowExport] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [showShare, setShowShare] = useState(false);
 
