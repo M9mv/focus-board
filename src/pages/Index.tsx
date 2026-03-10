@@ -8,6 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import TopBar from '@/components/dashboard/TopBar';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Canvas from '@/components/dashboard/Canvas';
+import BoardElementComponent from '@/components/dashboard/BoardElement';
 import MiniMap from '@/components/dashboard/MiniMap';
 import PomodoroTimer from '@/components/dashboard/PomodoroTimer';
 import WaterReminder from '@/components/dashboard/WaterReminder';
