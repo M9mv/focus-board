@@ -1,4 +1,4 @@
-import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Download, Sparkles, Users } from 'lucide-react';
+import { Home, Calendar, Plus, Lock, Unlock, LogOut, Timer, Maximize, Sparkles, Users } from 'lucide-react';
 import { Board } from '@/types/board';
 
 interface TopBarProps {
