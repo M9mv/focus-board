@@ -99,6 +99,50 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
     setShowEmojiPicker(false);
   };
 
+  // ===== Voice Note helpers =====
+  const startRecording = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+      mediaRecorder.ondataavailable = (ev) => { if (ev.data.size > 0) chunksRef.current.push(ev.data); };
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          onUpdate({ audioUrl: reader.result as string });
+        };
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch { /* mic permission denied */ }
+  }, [onUpdate]);
+
+  const stopRecording = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  }, []);
+
+  const togglePlayback = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    if (!element.audioUrl) return;
+    if (isPlaying && audioRef.current) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
+    }
+    const audio = new Audio(element.audioUrl);
+    audioRef.current = audio;
+    audio.onended = () => setIsPlaying(false);
+    audio.play();
+    setIsPlaying(true);
+  }, [element.audioUrl, isPlaying]);
+
   // ===== Mind Map helpers =====
   const addMindMapNode = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
