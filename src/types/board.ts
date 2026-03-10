@@ -104,6 +104,7 @@ export const DEFAULT_ELEMENT_SIZES: Record<ElementType, { width: number; height:
   divider: { width: 300, height: 4 },
   icon: { width: 80, height: 80 },
   mindmap: { width: 500, height: 400 },
+  voice: { width: 260, height: 100 },
 };
 
 // Labels shown in sidebar
