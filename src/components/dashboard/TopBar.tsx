@@ -14,7 +14,7 @@ interface TopBarProps {
   onLogout: () => void;
   onHome: () => void;
   onCalendar: () => void;
-  onExport?: () => void;
+  onFullscreen?: () => void;
   onToggleAI?: () => void;
   showAI?: boolean;
   isRTL?: boolean;
