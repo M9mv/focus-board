@@ -26,7 +26,7 @@ interface TopBarProps {
 const TopBar = ({
   boards, currentBoardId, onSwitchBoard, onAddBoard,
   zoomLocked, onToggleZoomLock, zoom, onTogglePomodoro, showPomodoro,
-  onLogout, onHome, onCalendar, onExport, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
+  onLogout, onHome, onCalendar, onFullscreen, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
 }: TopBarProps) => {
   return (
     <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
