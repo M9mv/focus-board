@@ -7,8 +7,8 @@ const STORAGE_KEY = 'study-dashboard-boards';
 const createDefaultBoard = (): Board => ({
   id: crypto.randomUUID(),
   name: 'My Board',
-  bgColor: 'hsl(0, 0%, 0%)',
-  gridColor: 'hsl(0, 0%, 100%)',
+  bgColor: '#52b1b2',
+  gridColor: '#fdfcfd',
   showGrid: true,
   isCollaborative: false,
   elements: [],

@@ -117,4 +117,5 @@ export const ELEMENT_LABELS: Record<ElementType, string> = {
   divider: 'Divider',
   icon: 'Emoji',
   mindmap: 'Mind Map',
+  voice: 'Voice Note',
 };
