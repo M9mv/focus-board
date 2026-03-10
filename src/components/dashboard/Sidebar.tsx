@@ -21,6 +21,7 @@ const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string
   { type: 'divider', icon: Minus, color: 'text-muted-foreground', labelKey: 'divider' },
   { type: 'icon', icon: Smile, color: 'text-orange-500', labelKey: 'emoji' },
   { type: 'mindmap', icon: GitBranch, color: 'text-cyan-500', labelKey: 'mindMap' },
+  { type: 'voice', icon: Mic, color: 'text-rose-500', labelKey: 'voiceNote' },
 ];
 
 const Sidebar = ({ onOpenSettings, userName, isRTL, t }: SidebarProps) => {
