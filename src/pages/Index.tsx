@@ -319,11 +319,60 @@ const Index = () => {
         onSetLang={setLang}
         t={t}
       />
-      <ExportBoardDialog
-        open={showExport}
-        onClose={() => setShowExport(false)}
-        t={t}
-      />
+      {/* Fullscreen mode */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[200] flex flex-col" style={{ backgroundColor: board.currentBoard.bgColor }}>
+          <div
+            className="flex-1 relative overflow-hidden"
+            style={{
+              ...(board.currentBoard.showGrid ? {
+                backgroundImage: `radial-gradient(circle, ${board.currentBoard.gridColor} 1px, transparent 1px)`,
+                backgroundSize: `${20 * board.currentBoard.zoom}px ${20 * board.currentBoard.zoom}px`,
+                backgroundPosition: `${board.currentBoard.camera.x % (20 * board.currentBoard.zoom)}px ${board.currentBoard.camera.y % (20 * board.currentBoard.zoom)}px`,
+              } : {}),
+            }}
+          >
+            <div style={{
+              transform: `translate(${board.currentBoard.camera.x}px, ${board.currentBoard.camera.y}px) scale(${board.currentBoard.zoom})`,
+              transformOrigin: '0 0',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}>
+              {board.currentBoard.elements.map(el => (
+                <BoardElementComponent
+                  key={el.id}
+                  element={el}
+                  selected={false}
+                  onMouseDown={() => {}}
+                  onUpdate={() => {}}
+                  onDelete={() => {}}
+                  onDuplicate={() => {}}
+                  onResizeMouseDown={() => {}}
+                  isRTL={isRTL}
+                  t={t}
+                />
+              ))}
+            </div>
+            {showPomodoro && (
+              <PomodoroTimer
+                visible={true}
+                onClose={() => setShowPomodoro(false)}
+                workMinutes={settings.pomodoroWork}
+                breakMinutes={settings.pomodoroBreak}
+                isRTL={isRTL}
+                t={t}
+              />
+            )}
+          </div>
+          <button
+            onClick={() => setIsFullscreen(false)}
+            className="fixed top-4 right-4 z-[201] px-4 py-2 rounded-xl glass ios-shadow-lg text-sm font-semibold text-foreground hover:bg-secondary/80 transition-colors"
+          >
+            ✕ {t?.('exitFullscreen') || 'Exit Fullscreen'}
+          </button>
+        </div>
+      )}
       <AISidebar
         open={showAI}
         onClose={() => setShowAI(false)}
