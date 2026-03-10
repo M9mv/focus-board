@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, Smile, Settings, User, GitBranch,
+  Minus, Smile, Settings, User, GitBranch, Mic,
 } from 'lucide-react';
 import { ElementType, ELEMENT_LABELS } from '@/types/board';
 
