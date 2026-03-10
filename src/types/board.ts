@@ -1,5 +1,5 @@
 // Element types available on the board
-export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'mindmap';
+export type ElementType = 'note' | 'todo' | 'textbox' | 'image' | 'checklist' | 'divider' | 'icon' | 'mindmap' | 'voice';
 
 export interface TodoItem {
   id: string;
