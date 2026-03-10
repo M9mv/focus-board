@@ -16,7 +16,7 @@ import BatteryIcon from '@/components/dashboard/BatteryIcon';
 import NewBoardDialog from '@/components/dashboard/NewBoardDialog';
 import SettingsDialog from '@/components/dashboard/SettingsDialog';
 import AISidebar from '@/components/dashboard/AISidebar';
-import AISidebar from '@/components/dashboard/AISidebar';
+import ShareBoardDialog from '@/components/dashboard/ShareBoardDialog';
 import ShareBoardDialog from '@/components/dashboard/ShareBoardDialog';
 import CompleteProfileDialog from '@/components/auth/CompleteProfileDialog';
 import CalendarPage from '@/pages/CalendarPage';
