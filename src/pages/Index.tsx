@@ -183,7 +183,18 @@ const Index = () => {
         }));
       if (nodes.length) {
         updates.mindmapNodes = nodes;
-        updates.mindmapConnections = [];
+        // Build connections from AI data
+        const connections: import('@/types/board').MindMapConnection[] = [];
+        if (Array.isArray(data.connections)) {
+          data.connections.forEach((c: { from: number; to: number }) => {
+            const fromNode = nodes[c.from];
+            const toNode = nodes[c.to];
+            if (fromNode && toNode) {
+              connections.push({ id: crypto.randomUUID(), fromNodeId: fromNode.id, toNodeId: toNode.id });
+            }
+          });
+        }
+        updates.mindmapConnections = connections;
       }
     }
 
