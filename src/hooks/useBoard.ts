@@ -81,6 +81,7 @@ export const useBoard = () => {
     if (type === 'checklist') { defaults.title = 'Checklist'; defaults.todos = [{ id: crypto.randomUUID(), text: 'Item 1', completed: false }]; }
     if (type === 'icon') defaults.emoji = '📚';
     if (type === 'image') defaults.title = 'Image Card';
+    if (type === 'voice') defaults.title = 'Voice Note';
     if (type === 'mindmap') {
       defaults.title = 'Mind Map';
       const centerId = crypto.randomUUID();

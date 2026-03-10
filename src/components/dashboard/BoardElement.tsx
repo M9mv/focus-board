@@ -233,6 +233,7 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
   const bgClass: Record<string, string> = {
     note: 'element-note', todo: 'element-todo', textbox: 'element-text',
     checklist: 'element-checklist', image: 'element-image', mindmap: 'bg-card/80',
+    voice: 'bg-card',
   };
 
   const renderTitle = () => {
