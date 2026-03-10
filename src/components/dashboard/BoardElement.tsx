@@ -495,6 +495,53 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
             )}
           </div>
         );
+      case 'voice':
+        return (
+          <div className="p-3 h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-950/30 dark:to-rose-900/20 rounded-xl">
+            {element.audioUrl ? (
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={togglePlayback}
+                  onMouseDown={stopProp}
+                  onTouchStart={stopProp}
+                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shrink-0 active:scale-95 transition-transform"
+                >
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                </button>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-foreground">🎙️ {t?.('voiceNote') || 'Voice Note'}</div>
+                  <div className="w-full h-1.5 rounded-full bg-secondary mt-1">
+                    <div className={`h-full rounded-full bg-primary transition-all ${isPlaying ? 'animate-pulse w-full' : 'w-0'}`} />
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onUpdate({ audioUrl: undefined }); }}
+                  onMouseDown={stopProp}
+                  onTouchStart={stopProp}
+                  className="p-1 rounded-lg hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 className="w-3 h-3 text-destructive" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                onMouseDown={stopProp}
+                onTouchStart={stopProp}
+                className={`w-14 h-14 rounded-full flex items-center justify-center transition-all active:scale-95 ${
+                  isRecording
+                    ? 'bg-destructive text-destructive-foreground animate-pulse'
+                    : 'bg-primary text-primary-foreground hover:opacity-90'
+                }`}
+              >
+                {isRecording ? <Square className="w-5 h-5" /> : <Mic className="w-6 h-6" />}
+              </button>
+            )}
+            <span className="text-[10px] text-muted-foreground">
+              {isRecording ? (t?.('recording') || 'Recording...') : (!element.audioUrl ? (t?.('tapToRecord') || 'Tap to record') : '')}
+            </span>
+          </div>
+        );
       default:
         return null;
     }
