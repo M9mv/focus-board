@@ -30,6 +30,9 @@ export interface BoardElement {
   // Mind map specific
   mindmapNodes?: MindMapNode[];
   mindmapConnections?: MindMapConnection[];
+  // Voice note specific
+  audioUrl?: string;       // data URL for recorded audio
+  audioDuration?: number;  // seconds
 }
 
 export interface MindMapNode {
