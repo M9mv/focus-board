@@ -274,7 +274,7 @@ const Index = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={displayName} isRTL={isRTL} t={t} />
+        <Sidebar onOpenSettings={() => setShowSettings(true)} userName={displayName} avatarUrl={profile?.avatar_url} isRTL={isRTL} t={t} />
         <Canvas
           board={board.currentBoard}
           selectedElementId={board.selectedElementId}

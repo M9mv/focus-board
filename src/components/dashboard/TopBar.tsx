@@ -29,18 +29,18 @@ const TopBar = ({
   onLogout, onHome, onCalendar, onFullscreen, onToggleAI, showAI, isRTL, t, isCollaborative, onShare,
 }: TopBarProps) => {
   return (
-    <div className="h-12 bg-card border-b border-border flex items-center px-4 gap-1 shrink-0 z-50">
+    <div className="h-12 bg-card border-b border-border flex items-center px-2 sm:px-4 gap-1 shrink-0 z-50">
       {/* Left nav */}
-      <div className="flex items-center gap-1 mr-4">
-        <button onClick={onHome} className="p-2 rounded-lg hover:bg-secondary transition-colors active:scale-95" title={t?.('home') || 'Home'}>
+      <div className="flex items-center gap-0.5 sm:gap-1 mr-1 sm:mr-4">
+        <button onClick={onHome} className="p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors active:scale-95" title={t?.('home') || 'Home'}>
           <Home className="w-4 h-4 text-muted-foreground" />
         </button>
-        <button onClick={onCalendar} className="p-2 rounded-lg hover:bg-secondary transition-colors active:scale-95" title={t?.('calendar') || 'Calendar'}>
+        <button onClick={onCalendar} className="p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors active:scale-95 max-[380px]:hidden" title={t?.('calendar') || 'Calendar'}>
           <Calendar className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
 
-      <div className="w-px h-6 bg-border mr-2" />
+      <div className="w-px h-6 bg-border mr-1 sm:mr-2 max-sm:hidden" />
 
       {/* Board tabs */}
       <div className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-hide">
@@ -48,7 +48,7 @@ const TopBar = ({
           <button
             key={board.id}
             onClick={() => onSwitchBoard(board.id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap active:scale-95 ${
+            className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap active:scale-95 ${
               board.id === currentBoardId
                 ? 'bg-primary text-primary-foreground'
                 : 'text-muted-foreground hover:bg-secondary'
@@ -67,14 +67,14 @@ const TopBar = ({
       </div>
 
       {/* Right controls */}
-      <div className="flex items-center gap-1 ml-4">
-        <span className="text-xs text-muted-foreground mr-2 tabular-nums max-md:hidden">
+      <div className="flex items-center gap-0.5 sm:gap-1 ml-1 sm:ml-4">
+        <span className="text-xs text-muted-foreground mr-1 sm:mr-2 tabular-nums max-md:hidden">
           {Math.round(zoom * 100)}%
         </span>
         {isCollaborative && (
           <button
             onClick={onShare}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors text-primary active:scale-95"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors text-primary active:scale-95"
             title={t?.('share') || 'Share'}
           >
             <Users className="w-4 h-4" />
@@ -82,33 +82,33 @@ const TopBar = ({
         )}
         <button
           onClick={onFullscreen}
-          className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
+          className="p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95"
           title={t?.('fullscreen') || 'Fullscreen'}
         >
           <Maximize className="w-4 h-4" />
         </button>
         <button
           onClick={onTogglePomodoro}
-          className={`p-2 rounded-lg transition-colors active:scale-95 ${showPomodoro ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
+          className={`p-1.5 sm:p-2 rounded-lg transition-colors active:scale-95 ${showPomodoro ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
           title={t?.('pomodoroTimer') || 'Pomodoro Timer'}
         >
           <Timer className="w-4 h-4" />
         </button>
         <button
           onClick={onToggleZoomLock}
-          className={`p-2 rounded-lg transition-colors active:scale-95 ${zoomLocked ? 'bg-destructive text-destructive-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
+          className={`p-1.5 sm:p-2 rounded-lg transition-colors active:scale-95 max-[380px]:hidden ${zoomLocked ? 'bg-destructive text-destructive-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
           title={zoomLocked ? (t?.('unlockBoard') || 'Unlock Board') : (t?.('lockBoard') || 'Lock Board')}
         >
           {zoomLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
         </button>
         <button
           onClick={onToggleAI}
-          className={`p-2 rounded-lg transition-colors active:scale-95 ${showAI ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
+          className={`p-1.5 sm:p-2 rounded-lg transition-colors active:scale-95 ${showAI ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary text-muted-foreground'}`}
           title={t?.('aiAssistant') || 'AI Assistant'}
         >
           <Sparkles className="w-4 h-4" />
         </button>
-        <button onClick={onLogout} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95" title={t?.('logout') || 'Logout'}>
+        <button onClick={onLogout} className="p-1.5 sm:p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground active:scale-95" title={t?.('logout') || 'Logout'}>
           <LogOut className="w-4 h-4" />
         </button>
       </div>
