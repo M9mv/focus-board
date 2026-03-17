@@ -17,7 +17,7 @@ const MiniMap = ({ elements, camera, zoom, visible }: MiniMapProps) => {
   if (elements.length === 0) {
     return (
       <div
-        className="fixed top-16 right-4 z-40 glass ios-shadow rounded-xl flex items-center justify-center animate-fade-in"
+        className="fixed bottom-20 left-4 z-40 glass ios-shadow rounded-xl flex items-center justify-center animate-fade-in"
         style={{ width: mapW, height: mapH }}
       >
         <span className="text-[10px] text-muted-foreground">No elements</span>
