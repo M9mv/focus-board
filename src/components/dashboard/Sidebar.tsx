@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import {
   StickyNote, ListTodo, Type, ImageIcon, CheckSquare,
-  Minus, Smile, Settings, User, GitBranch, Mic,
+  Minus, Smile, Settings, GitBranch, Mic,
 } from 'lucide-react';
 import { ElementType, ELEMENT_LABELS } from '@/types/board';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface SidebarProps {
   onOpenSettings: () => void;
   userName: string;
+  avatarUrl?: string;
   isRTL?: boolean;
   t?: (key: string) => string;
 }
@@ -24,7 +26,7 @@ const SIDEBAR_ITEMS: { type: ElementType; icon: React.ElementType; color: string
   { type: 'voice', icon: Mic, color: 'text-rose-500', labelKey: 'voiceNote' },
 ];
 
-const Sidebar = ({ onOpenSettings, userName, isRTL, t }: SidebarProps) => {
+const Sidebar = ({ onOpenSettings, userName, avatarUrl, isRTL, t }: SidebarProps) => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -37,13 +39,12 @@ const Sidebar = ({ onOpenSettings, userName, isRTL, t }: SidebarProps) => {
     e.dataTransfer.effectAllowed = 'copy';
   };
 
-  // Touch-based add: on long-press or tap, we'll add to center
   const handleTouchEnd = (type: ElementType) => {
-    // For mobile: we fire a custom event that Index listens to
     window.dispatchEvent(new CustomEvent('sidebar-touch-add', { detail: { type } }));
   };
 
   const locale = isRTL ? 'ar' : 'en';
+  const initials = userName?.charAt(0)?.toUpperCase() || 'U';
 
   return (
     <div className="w-56 bg-card border-r border-border flex flex-col shrink-0 animate-slide-in-left max-md:w-14 max-md:overflow-hidden">
@@ -70,9 +71,14 @@ const Sidebar = ({ onOpenSettings, userName, isRTL, t }: SidebarProps) => {
       {/* Footer */}
       <div className="p-4 border-t border-border max-md:p-2">
         <div className="flex items-center gap-2 mb-3 max-md:justify-center">
-          <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-            <User className="w-3.5 h-3.5 text-primary-foreground" />
-          </div>
+          <Avatar className="w-7 h-7">
+            {avatarUrl ? (
+              <AvatarImage src={avatarUrl} alt={userName} />
+            ) : null}
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <span className="text-sm font-medium text-foreground truncate max-md:hidden">{userName}</span>
         </div>
         <div className="text-xs text-muted-foreground max-md:hidden">
