@@ -350,63 +350,30 @@ const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpd
       case 'icon':
         return (
           <div
-            className="w-full h-full flex items-center justify-center text-4xl select-none relative cursor-pointer"
-            onClick={(e) => {
+            className="w-full h-full flex items-center justify-center select-none relative cursor-pointer"
+            style={{ fontSize: Math.min(element.width, element.height) * 0.6 }}
+            onDoubleClick={(e) => {
               e.stopPropagation();
-              if (selected) setShowEmojiPicker(!showEmojiPicker);
+              setShowEmojiPicker(!showEmojiPicker);
             }}
           >
             {element.emoji ? (
-              <span className="transition-transform hover:scale-110">{element.emoji}</span>
+              <span className="transition-transform hover:scale-110 leading-none">{element.emoji}</span>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <Smile className="w-8 h-8 text-muted-foreground/30" />
-              </div>
+              <Smile className="w-8 h-8 text-muted-foreground/30" />
             )}
 
-            {/* Rich emoji picker */}
             {showEmojiPicker && (
               <div
-                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[200] bg-card border border-border rounded-2xl ios-shadow-lg p-3 w-80 animate-scale-in"
+                className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-[200] bg-card border border-border rounded-2xl ios-shadow-lg p-3 w-72 animate-scale-in"
                 onMouseDown={stopProp}
                 onTouchStart={stopProp}
                 onClick={stopProp}
               >
-                {/* Category tabs */}
-                <div className="flex gap-1 mb-2 pb-2 border-b border-border overflow-x-auto">
-                  {Object.keys(EMOJI_CATEGORIES).map(cat => (
-                    <button key={cat} onClick={(e) => { e.stopPropagation(); setEmojiCategory(cat); }}
-                      className={`w-8 h-8 flex items-center justify-center text-lg rounded-lg shrink-0 transition-colors ${emojiCategory === cat ? 'bg-primary/10 ring-1 ring-primary/30' : 'hover:bg-secondary'}`}>
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom emoji */}
-                <div className="flex items-center gap-2 mb-2">
-                  <input
-                    value={customEmoji}
-                    onChange={(e) => setCustomEmoji(e.target.value)}
-                    onMouseDown={stopProp}
-                    onTouchStart={stopProp}
-                    placeholder={t?.('pasteAnyEmoji') || 'Paste any emoji'}
-                    className="flex-1 h-8 px-2 rounded-lg bg-secondary text-foreground text-sm outline-none placeholder:text-muted-foreground"
-                  />
-                  <button
-                    onClick={(e) => { e.stopPropagation(); selectCustomEmoji(); }}
-                    onMouseDown={stopProp}
-                    onTouchStart={stopProp}
-                    className="h-8 px-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold"
-                  >
-                    {t?.('apply') || 'Apply'}
-                  </button>
-                </div>
-
-                {/* Emoji grid */}
-                <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto">
-                  {EMOJI_CATEGORIES[emojiCategory].map(em => (
+                <div className="grid grid-cols-10 gap-1 max-h-48 overflow-y-auto">
+                  {EMOJI_LIST.map(em => (
                     <button key={em} onClick={(e) => { e.stopPropagation(); selectEmoji(em); }} onMouseDown={stopProp} onTouchStart={stopProp}
-                      className="w-8 h-8 flex items-center justify-center text-xl hover:bg-secondary rounded-lg transition-colors active:scale-90">
+                      className="w-6 h-6 flex items-center justify-center text-lg hover:bg-secondary rounded-lg transition-colors active:scale-90">
                       {em}
                     </button>
                   ))}
