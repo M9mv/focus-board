@@ -31,7 +31,6 @@ interface BoardElementProps {
 const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpdate, onDelete, onDuplicate, onResizeMouseDown, onResizeTouchStart, isRTL, t }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [emojiCategory, setEmojiCategory] = useState('📚');
   const [customEmoji, setCustomEmoji] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
