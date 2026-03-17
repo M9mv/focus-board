@@ -31,7 +31,7 @@ interface BoardElementProps {
 const BoardElement = memo(({ element, selected, onMouseDown, onTouchStart, onUpdate, onDelete, onDuplicate, onResizeMouseDown, onResizeTouchStart, isRTL, t }: BoardElementProps) => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [customEmoji, setCustomEmoji] = useState('');
+  const [customEmojiUnused] = useState(''); // kept for type compat
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
