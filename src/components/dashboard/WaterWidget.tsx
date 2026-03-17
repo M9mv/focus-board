@@ -19,7 +19,7 @@ const WaterWidget = () => {
 
   return (
     <div
-      className="fixed top-16 right-20 z-40 w-14 h-14 rounded-2xl glass ios-shadow flex items-center justify-center cursor-pointer select-none animate-fade-in hover:ios-shadow-lg transition-shadow"
+      className="fixed bottom-4 left-20 z-40 w-14 h-14 rounded-2xl glass ios-shadow flex items-center justify-center cursor-pointer select-none animate-fade-in hover:ios-shadow-lg transition-shadow"
       onClick={() => setGlasses(g => Math.min(g + 1, target))}
       title={`Water: ${glasses}/${target} cups — click to log`}
     >
